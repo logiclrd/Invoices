@@ -1,7 +1,7 @@
-namespace Invoice;
+namespace Invoices;
 
 public class Tax
 {
-	public string TaxName;
+	public string? TaxName;
 	public decimal TaxRate;
 }

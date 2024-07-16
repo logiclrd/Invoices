@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Invoice xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <InvoiceNumber>1</InvoiceNumber>
+  <InvoiceDate>2024-07-16T13:24:35</InvoiceDate>
+  <Invoicee>
+    <string>one</string>
+    <string>two</string>
+  </Invoicee>
+  <PayableTo>Wizards of the Plains</PayableTo>
+  <ProjectName />
+  <DueDate xsi:nil="true" />
+  <Items>
+    <InvoiceItem>
+      <Description>Dingle dangley</Description>
+      <Quantity>1</Quantity>
+      <UnitPrice>123</UnitPrice>
+    </InvoiceItem>
+    <InvoiceItem>
+      <Description>Tummy rub</Description>
+      <Quantity>1</Quantity>
+      <UnitPrice>25</UnitPrice>
+    </InvoiceItem>
+  </Items>
+  <Taxes>
+    <Tax>
+      <TaxName>GST</TaxName>
+      <TaxRate>0.05</TaxRate>
+    </Tax>
+    <Tax>
+      <TaxName>PST</TaxName>
+      <TaxRate>0.07</TaxRate>
+    </Tax>
+  </Taxes>
+  <Payments>
+    <Payment>
+      <PaymentType>Cash</PaymentType>
+      <Amount>123</Amount>
+    </Payment>
+    <Payment>
+      <PaymentType>MasterCard</PaymentType>
+      <Amount>25</Amount>
+    </Payment>
+  </Payments>
+</Invoice>
