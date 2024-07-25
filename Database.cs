@@ -15,7 +15,7 @@ public class Database : IDisposable
 	{
 		_connection = new SqlConnection();
 
-		_connection.ConnectionString = @"Data Source=.\SQLEXPRESS;Initial Catalog=Invoices";
+		_connection.ConnectionString = @"Data Source=.\SQLEXPRESS;Initial Catalog=Invoices;Integrated Security=true;TrustServerCertificate=true";
 		_connection.Open();
 	}
 
@@ -39,7 +39,7 @@ public class Database : IDisposable
 		return taxDefinition;
 	}
 
-	public TaxDefinition GetTaxDefinition2(Tax tax)
+	public TaxDefinition GetOrCreateTaxDefinition(Tax tax)
 	{
 		using (var cmd = _connection.CreateCommand())
 		{
@@ -53,11 +53,17 @@ public class Database : IDisposable
 					return ReadTaxDefinition(reader);
 			}
 
-			cmd.CommandText = "INSERT INTO Taxes (TaxName, TaxRate) OUTPUT (INSERTED.TaxID, INSERTED.TaxName, INSERTED.TaxRate) VALUES (@TaxName, @TaxRate)";
+			cmd.CommandText = "INSERT INTO Taxes (TaxName, TaxRate) OUTPUT INSERTED.TaxID, INSERTED.TaxName, INSERTED.TaxRate VALUES (@TaxName, @TaxRate)";
 
 			cmd.Parameters.Add("@TaxRate", SqlDbType.Decimal).Value = tax.TaxRate;
 
-			return ReadTaxDefinition(cmd.ExecuteReader());
+			using (var reader = cmd.ExecuteReader())
+			{
+				if (!reader.Read())
+					throw new Exception("Sanity failure: No data from OUTPUT clause");
+
+				return ReadTaxDefinition(cmd.ExecuteReader());
+			}
 		}
 	}
 
@@ -70,7 +76,7 @@ public class Database : IDisposable
 	{
 		var taxDefinitionByName = taxDefinitions.Values.ToDictionary(definition => definition.TaxName ?? "", StringComparer.InvariantCultureIgnoreCase);
 
-		DeleteInvoice(invoice.InvoiceID);
+		DeleteInvoice(invoice.InvoiceNumber);
 
 		using (var cmd = _connection.CreateCommand())
 		{
@@ -215,7 +221,13 @@ public class Database : IDisposable
 						if (tax.TaxName == null)
 							throw new Exception("Tax is not properly specified (no TaxID or TaxName)");
 
-						var taxDefinition = taxDefinitionByName[tax.TaxName];
+						if (!taxDefinitionByName.TryGetValue(tax.TaxName, out var taxDefinition))
+						{
+							taxDefinition = GetOrCreateTaxDefinition(tax);
+
+							if (taxDefinition.TaxRate != tax.TaxRate)
+								throw new Exception("Defined tax '" + taxDefinition.TaxName + "' has a different rate (" + taxDefinition.TaxRate + ") than tax '" + tax.TaxName + "' in the invoice (" + tax.TaxRate + ")");
+						}
 
 						tax.TaxID = taxDefinition.TaxID;
 						tax.TaxRate = taxDefinition.TaxRate;
@@ -246,7 +258,7 @@ public class Database : IDisposable
 
 					sequenceParam.Value = i;
 					paymentTypeIDParam.Value = (int)payment.PaymentType;
-					paymentTypeCustomParam.Value = payment.PaymentTypeCustom;
+					paymentTypeCustomParam.Value = payment.PaymentTypeCustom ?? (object)DBNull.Value;
 					receivedDateTimeParam.Value = payment.ReceivedDateTime;
 					amountParam.Value = payment.Amount;
 
@@ -294,9 +306,12 @@ public class Database : IDisposable
 
 			using (var reader = cmd.ExecuteReader())
 			{
-				var taxDefinition = ReadTaxDefinition(reader);
+				while (reader.Read())
+				{
+					var taxDefinition = ReadTaxDefinition(reader);
 
-				lookUpTable[taxDefinition.TaxID] = taxDefinition;
+					lookUpTable[taxDefinition.TaxID] = taxDefinition;
+				}
 			}
 
 			return lookUpTable;
@@ -528,6 +543,30 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 			cmd.ExecuteNonQuery();
 
 			cmd.CommandText = "DELETE FROM Invoices WHERE InvoiceID = @InvoiceID";
+			cmd.ExecuteNonQuery();
+		}
+	}
+
+	public void DeleteInvoice(string invoiceNumber)
+	{
+		using (var cmd = _connection.CreateCommand())
+		{
+			cmd.Parameters.Add("@InvoiceNumber", SqlDbType.NVarChar).Value = invoiceNumber;
+
+			cmd.CommandText = "DELETE FROM InvoiceRelations WHERE InvoiceID IN (SELECT InvoiceID FROM Invoices WHERE InvoiceNumber = @InvoiceNumber) OR ReferencesInvoiceID IN (SELECT InvoiceID FROM Invoices WHERE InvoiceNumber = @InvoiceNumber)";
+			cmd.ExecuteNonQuery();
+			cmd.CommandText = "DELETE FROM InvoiceInvoicees WHERE InvoiceID IN (SELECT InvoiceID FROM Invoices WHERE InvoiceNumber = @InvoiceNumber)";
+			cmd.ExecuteNonQuery();
+			cmd.CommandText = "DELETE FROM InvoiceItems WHERE InvoiceID IN (SELECT InvoiceID FROM Invoices WHERE InvoiceNumber = @InvoiceNumber)";
+			cmd.ExecuteNonQuery();
+			cmd.CommandText = "DELETE FROM InvoiceTaxes WHERE InvoiceID IN (SELECT InvoiceID FROM Invoices WHERE InvoiceNumber = @InvoiceNumber)";
+			cmd.ExecuteNonQuery();
+			cmd.CommandText = "DELETE FROM InvoicePayments WHERE InvoiceID IN (SELECT InvoiceID FROM Invoices WHERE InvoiceNumber = @InvoiceNumber)";
+			cmd.ExecuteNonQuery();
+			cmd.CommandText = "DELETE FROM InvoiceNotes WHERE InvoiceID IN (SELECT InvoiceID FROM Invoices WHERE InvoiceNumber = @InvoiceNumber)";
+			cmd.ExecuteNonQuery();
+
+			cmd.CommandText = "DELETE FROM Invoices WHERE InvoiceID IN (SELECT InvoiceID FROM Invoices WHERE InvoiceNumber = @InvoiceNumber)";
 			cmd.ExecuteNonQuery();
 		}
 	}
