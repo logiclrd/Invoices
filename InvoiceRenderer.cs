@@ -264,7 +264,7 @@ public class InvoiceRenderer
 			foreach (var payment in invoice.Payments)
 			{
 				string header = "Paid: " + payment.GetShortTypeDescription();
-				string amountText = payment.Amount.ToString("$#,##0.00");
+				string amountText = payment.Amount.ToString("$#,##0.00;($#,##0.00)");
 
 				spaces = characters - header.Length - amountText.Length;
 
