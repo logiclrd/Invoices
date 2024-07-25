@@ -5,8 +5,13 @@ namespace Invoices;
 
 public class Invoice
 {
-	public int InvoiceNumber;
+	public int InvoiceID;
+
+	public string InvoiceNumber = "";
 	public DateTime InvoiceDate;
+
+	public InvoiceState State;
+	public string StateDescription = "";
 
 	public List<string> Invoicee = new List<string>();
 
@@ -20,4 +25,8 @@ public class Invoice
 
 	public List<Tax> Taxes = new List<Tax>();
 	public List<Payment> Payments = new List<Payment>();
+
+	public List<int> PredecessorInvoiceIDs = new List<int>();
+	public List<int> SuccessorInvoiceIDs = new List<int>();
+	public List<int> RelatedInvoiceIDs = new List<int>();
 }

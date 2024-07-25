@@ -7,6 +7,7 @@ public enum PaymentType
 	Custom,
 
 	Cash,
+	eTransfer,
 	DebitCard,
 	CreditCard,
 	MasterCard,

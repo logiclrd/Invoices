@@ -7,8 +7,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Media.TextFormatting;
-using System.Xml;
 
 namespace Invoices;
 
@@ -259,6 +257,13 @@ public class InvoiceRenderer
 				spaces = characters - header.Length - amountText.Length;
 
 				plan.Items.Add(new RenderPlanItem(ItemType.Text, summaryIndent + header + new string(' ', spaces) + amountText));
+
+				if (payment.ReceivedDateTime.HasValue)
+				{
+					string receivedDateTimeText = payment.ReceivedDateTime.Value.ToString("yyyy-MM-dd HH:mm");
+
+					plan.Items.Add(new RenderPlanItem(ItemType.Text, summaryIndent + receivedDateTimeText));
+				}
 
 				remaining -= payment.Amount;
 			}
