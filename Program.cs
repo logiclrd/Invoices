@@ -33,6 +33,10 @@ class Program
 		using (var stream = File.OpenRead(invoiceFilePath))
 			invoice = (Invoice)serializer.Deserialize(stream)!;
 
+		var database = new Database();
+
+		database.SaveInvoice(invoice);
+		/*
 		var renderer = new InvoiceRenderer();
 
 		var renderedInvoice = renderer.RenderImage(invoice);
@@ -45,6 +49,7 @@ class Program
 			encoder.Save(outputStream);
 
 		Print(renderedInvoice);
+		*/
 	}
 
 	static void Print(BitmapSource image)

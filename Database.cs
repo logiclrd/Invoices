@@ -524,6 +524,8 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 			cmd.ExecuteNonQuery();
 			cmd.CommandText = "DELETE FROM InvoicePayments WHERE InvoiceID = @InvoiceID";
 			cmd.ExecuteNonQuery();
+			cmd.CommandText = "DELETE FROM InvoiceNotes WHERE InvoiceID = @InvoiceID";
+			cmd.ExecuteNonQuery();
 
 			cmd.CommandText = "DELETE FROM Invoices WHERE InvoiceID = @InvoiceID";
 			cmd.ExecuteNonQuery();
