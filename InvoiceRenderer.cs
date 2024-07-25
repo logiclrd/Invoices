@@ -173,10 +173,22 @@ public class InvoiceRenderer
 			plan.Items.Add(new RenderPlanItem(ItemType.Text, ""));
 		}
 
-		const int ColumnWidth_Description = 21;
-		const int ColumnWidth_Qty = 6;
-		const int ColumnWidth_Price = 9;
-		const int ColumnWidth_Subtotal = 9;
+		int ColumnWidth_Description = 21;
+		int ColumnWidth_Qty = 6;
+		int ColumnWidth_Price = 9;
+		int ColumnWidth_Subtotal = 9;
+
+		if (invoice.Items.Any(item => item.UnitPrice >= 1000))
+		{
+			ColumnWidth_Description--;
+			ColumnWidth_Price++;
+		}
+
+		if (invoice.Items.Sum(item => item.UnitPrice * item.Quantity) >= 1000)
+		{
+			ColumnWidth_Description--;
+			ColumnWidth_Subtotal++;
+		}
 
 		plan.Items.Add(new RenderPlanItem(ItemType.BoldText,
 			"Description".PadRight(ColumnWidth_Description) +
@@ -272,12 +284,37 @@ public class InvoiceRenderer
 			{
 				plan.Items.Add(new RenderPlanItem(ItemType.Text, ""));
 
-				string header = "Remaining:";
-				string amountText = remaining.ToString("$#,##0.00");
+				string header = (remaining > 0) ? "Remaining:" : "Balance:";
+				string amountText = remaining.ToString("$#,##0.00;($#,##0.00)");
 
 				spaces = characters - header.Length - amountText.Length;
 
 				plan.Items.Add(new RenderPlanItem(ItemType.Text, summaryIndent + header + new string(' ', spaces) + amountText));
+			}
+		}
+
+		if (invoice.Notes.Any())
+		{
+			plan.Items.Add(new RenderPlanItem(ItemType.Text, ""));
+
+			foreach (string note in invoice.Notes)
+			{
+				if (string.IsNullOrWhiteSpace(note))
+				{
+					plan.Items.Add(new RenderPlanItem(ItemType.Text, ""));
+					continue;
+				}
+
+				int indentWidth = 0;
+
+				while ((note.Length > indentWidth) && char.IsWhiteSpace(note, indentWidth))
+					indentWidth++;
+
+				string indent = note.Substring(0, indentWidth);
+				string noteText = note.Substring(indentWidth);
+
+				foreach (string noteLine in WordWrap(noteText, 45 - indent.Length))
+					plan.Items.Add(new RenderPlanItem(ItemType.Text, indent + noteLine));
 			}
 		}
 

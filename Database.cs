@@ -256,12 +256,31 @@ public class Database : IDisposable
 				cmd.Parameters.Clear();
 			}
 
+			void InsertInvoiceNotes()
+			{
+				cmd.CommandText = "INSERT INTO InvoiceNotes (InvoiceID, Sequence, TextLine) VALUES (@InvoiceID, @Sequence, @TextLine)";
+
+				cmd.Parameters.Add("@InvoiceID", SqlDbType.Int).Value = invoiceID;
+
+				var sequenceParam = cmd.Parameters.Add("@Sequence", SqlDbType.Int);
+				var textLineParam = cmd.Parameters.Add("@TextLine", SqlDbType.NVarChar);
+
+				for (int i=0; i < invoice.Notes.Count; i++)
+				{
+					sequenceParam.Value = i;
+					textLineParam.Value = invoice.Notes[i];
+
+					cmd.ExecuteNonQuery();
+				}
+			}
+
 			InsertInvoices();
 			InsertInvoiceRelations();
 			InsertInvoiceInvoicees();
 			InsertInvoiceItems();
 			InsertInvoiceTaxes();
 			InsertInvoicePayments();
+			InsertInvoiceNotes();
 		}
 	}
 
@@ -301,6 +320,7 @@ SELECT * FROM InvoiceInvoicees WHERE InvoiceID = @InvoiceID;
 SELECT * FROM InvoiceItems WHERE InvoiceID = @InvoiceID;
 SELECT * FROM InvoiceTaxes WHERE InvoiceID = @InvoiceID;
 SELECT * FROM InvoicePayments WHERE InvoiceID = @InvoiceID;
+SELECT * FROM InvoiceNotes WHERE InvoiceID = @InvoiceID;
 SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 
 			using (var reader = cmd.ExecuteReader())
@@ -382,6 +402,22 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 		}
 	}
 
+	IEnumerable<(int InvoiceID, int Sequence, string TextLine)> ReadInvoiceNotes(SqlDataReader reader)
+	{
+		int invoiceID_ordinal = reader.GetOrdinal("InvoiceID");
+		int sequence_ordinal = reader.GetOrdinal("Sequence");
+		int textLine_ordinal = reader.GetOrdinal("TextLine");
+
+		while (reader.Read())
+		{
+			int invoiceID = reader.GetInt32(invoiceID_ordinal);
+			int sequence = reader.GetInt32(sequence_ordinal);
+			string textLine = reader.GetString(textLine_ordinal);
+
+			yield return (invoiceID, sequence, textLine);
+		}
+	}
+
 	IEnumerable<Invoice> ReadInvoices(SqlDataReader reader)
 	{
 		int invoiceID_ordinal = reader.GetOrdinal("InvoiceID");
@@ -441,6 +477,8 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 		if (!reader.NextResult())
 			yield break;
 
+		var notesByInvoiceID = ReadInvoiceNotes(reader).GroupBy(note => note.InvoiceID).ToDictionary(grouping => grouping.Key, grouping => grouping.AsEnumerable());
+
 		foreach (var invoice in ReadInvoices(reader))
 		{
 			if (relationsByInvoiceID.TryGetValue(invoice.InvoiceID, out var relations))
@@ -462,6 +500,9 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 
 			if (paymentsByInvoiceID.TryGetValue(invoice.InvoiceID, out var payments))
 				invoice.Payments = payments.OrderBy(payment => payment.Sequence).Select(Payment.Rehydrate).ToList();
+
+			if (notesByInvoiceID.TryGetValue(invoice.InvoiceID, out var notes))
+				invoice.Notes = notes.OrderBy(note => note.Sequence).Select(note => note.TextLine).ToList();
 
 			yield return invoice;
 		}

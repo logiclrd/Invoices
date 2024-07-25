@@ -125,3 +125,13 @@ CREATE TABLE InvoicePayments
     CONSTRAINT FK_InvoicePayments_InvoiceID FOREIGN KEY (InvoiceID) REFERENCES Invoices(InvoiceID),
     CONSTRAINT FK_InvoicePayments_PaymentTypeID FOREIGN KEY (PaymentTypeID) REFERENCES PaymentTypes(PaymentTypeID)
 )
+
+CREATE TABLE InvoiceNotes
+(
+    RowID     INT           NOT NULL IDENTITY(1, 1) PRIMARY KEY,
+    InvoiceID INT           NOT NULL,
+    Sequence  INT           NOT NULL,
+    TextLine  NVARCHAR(200) NOT NULL,
+
+    CONSTRAINT FK_InvoiceNotes_InvoiceID FOREIGN KEY (InvoiceID) REFERENCES Invoices(InvoiceID)
+)
