@@ -287,6 +287,9 @@ public class Database : IDisposable
 			}
 
 			InsertInvoices();
+
+			invoice.InvoiceID = invoiceID;
+
 			InsertInvoiceRelations();
 			InsertInvoiceInvoicees();
 			InsertInvoiceItems();
@@ -318,6 +321,21 @@ public class Database : IDisposable
 		}
 	}
 
+	public int GetInvoiceIDByInvoiceNumber(string invoiceNumber)
+	{
+		using (var cmd = _connection.CreateCommand())
+		{
+			cmd.CommandText = "SELECT InvoiceID FROM Invoices WHERE InvoiceNumber = @InvoiceNumber";
+
+			cmd.Parameters.Add("@InvoiceNumber", SqlDbType.NVarChar).Value = invoiceNumber;
+
+			if (cmd.ExecuteScalar() is int invoiceID)
+				return invoiceID;
+			else
+				throw new KeyNotFoundException();
+		}
+	}
+
 	public Invoice LoadInvoice(int invoiceID)
 	{
 		var taxDefinitions = LoadTaxDefinitions();
@@ -327,6 +345,8 @@ public class Database : IDisposable
 
 	public Invoice LoadInvoice(int invoiceID, Dictionary<int, TaxDefinition> taxDefinitions)
 	{
+		Console.WriteLine("LoadInvoice({0})", invoiceID);
+
 		using (var cmd = _connection.CreateCommand())
 		{
 			cmd.CommandText = @"
@@ -338,24 +358,58 @@ SELECT * FROM InvoicePayments WHERE InvoiceID = @InvoiceID;
 SELECT * FROM InvoiceNotes WHERE InvoiceID = @InvoiceID;
 SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 
+			cmd.Parameters.Add("@InvoiceID", SqlDbType.Int).Value = invoiceID;
+
 			using (var reader = cmd.ExecuteReader())
 				return LoadInvoices(reader, taxDefinitions).Single();
 		}
 	}
 
-	IEnumerable<(int InvoiceID, InvoiceRelationType RelationType, int RelatedInvoiceID)> ReadInvoiceRelations(SqlDataReader reader)
+	public Invoice LoadInvoice(string invoiceNumber)
+	{
+		var taxDefinitions = LoadTaxDefinitions();
+
+		return LoadInvoice(invoiceNumber, taxDefinitions);
+	}
+
+	public Invoice LoadInvoice(string invoiceNumber, Dictionary<int, TaxDefinition> taxDefinitions)
+	{
+		return LoadInvoice(GetInvoiceIDByInvoiceNumber(invoiceNumber));
+	}
+
+	IEnumerable<(int InvoiceID, InvoiceRelationType RelationType, int ReferencesInvoiceID)> ReadInvoiceRelations(SqlDataReader reader)
 	{
 		int invoiceID_ordinal = reader.GetOrdinal("InvoiceID");
 		int relationTypeID_ordinal = reader.GetOrdinal("RelationTypeID");
-		int relatedInvoiceID_ordinal = reader.GetOrdinal("RelatedInvoiceID");
+		int referencesInvoiceID_ordinal = reader.GetOrdinal("ReferencesInvoiceID");
 
 		while (reader.Read())
 		{
+			Console.WriteLine("InvoiceRelations");
+
 			int invoiceID = reader.GetInt32(invoiceID_ordinal);
 			InvoiceRelationType relationType = (InvoiceRelationType)reader.GetInt32(relationTypeID_ordinal);
-			int relatedInvoiceID = reader.GetInt32(relatedInvoiceID_ordinal);
+			int referencesInvoiceID = reader.GetInt32(referencesInvoiceID_ordinal);
 
-			yield return (invoiceID, relationType, relatedInvoiceID);
+			yield return (invoiceID, relationType, referencesInvoiceID);
+		}
+	}
+
+	IEnumerable<(int InvoiceID, int LineNumber, string InvoiceeLine)> ReadInvoiceInvoicees(SqlDataReader reader)
+	{
+		int invoiceID_ordinal = reader.GetOrdinal("InvoiceID");
+		int lineNumber_ordinal = reader.GetOrdinal("LineNumber");
+		int invoiceeLine_ordinal = reader.GetOrdinal("InvoiceeLine");
+
+		while (reader.Read())
+		{
+			Console.WriteLine("InvoiceInvoicees");
+
+			int invoiceID = reader.GetInt32(invoiceID_ordinal);
+			int lineNumber = reader.GetInt32(lineNumber_ordinal);
+			string invoiceeLine = reader.GetString(invoiceeLine_ordinal);
+
+			yield return (invoiceID, lineNumber, invoiceeLine);
 		}
 	}
 
@@ -369,6 +423,8 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 
 		while (reader.Read())
 		{
+			Console.WriteLine("InvoiceItems");
+
 			int invoiceID = reader.GetInt32(invoiceID_ordinal);
 			int sequence = reader.GetInt32(sequence_ordinal);
 			string description = reader.GetString(description_ordinal);
@@ -387,6 +443,8 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 
 		while (reader.Read())
 		{
+			Console.WriteLine("InvoiceTaxes");
+
 			int invoiceID = reader.GetInt32(invoiceID_ordinal);
 			int sequence = reader.GetInt32(sequence_ordinal);
 			int taxID = reader.GetInt32(taxID_ordinal);
@@ -406,6 +464,8 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 
 		while (reader.Read())
 		{
+			Console.WriteLine("InvoicePayments");
+
 			int invoiceID = reader.GetInt32(invoiceID_ordinal);
 			int sequence = reader.GetInt32(sequence_ordinal);
 			int paymentTypeID = reader.GetInt32(paymentTypeID_ordinal);
@@ -425,6 +485,8 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 
 		while (reader.Read())
 		{
+			Console.WriteLine("InvoiceNotes");
+
 			int invoiceID = reader.GetInt32(invoiceID_ordinal);
 			int sequence = reader.GetInt32(sequence_ordinal);
 			string textLine = reader.GetString(textLine_ordinal);
@@ -446,6 +508,8 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 
 		while (reader.Read())
 		{
+			Console.WriteLine("Invoices");
+
 			int invoiceID = reader.GetInt32(invoiceID_ordinal);
 			string invoiceNumber = reader.GetString(invoiceNumber_ordinal);
 			DateTime invoiceDate = reader.GetDateTime(invoiceDate_ordinal);
@@ -477,6 +541,11 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 		if (!reader.NextResult())
 			yield break;
 
+		var invoiceesByInvoiceID = ReadInvoiceInvoicees(reader).GroupBy(invoicee => invoicee.InvoiceID).ToDictionary(grouping => grouping.Key, grouping => grouping.AsEnumerable());
+
+		if (!reader.NextResult())
+			yield break;
+
 		var itemsByInvoiceID = ReadInvoiceItems(reader).GroupBy(item => item.InvoiceID).ToDictionary(grouping => grouping.Key, grouping => grouping.AsEnumerable());
 
 		if (!reader.NextResult())
@@ -494,14 +563,20 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 
 		var notesByInvoiceID = ReadInvoiceNotes(reader).GroupBy(note => note.InvoiceID).ToDictionary(grouping => grouping.Key, grouping => grouping.AsEnumerable());
 
+		if (!reader.NextResult())
+			yield break;
+
 		foreach (var invoice in ReadInvoices(reader))
 		{
 			if (relationsByInvoiceID.TryGetValue(invoice.InvoiceID, out var relations))
 			{
-				invoice.PredecessorInvoiceIDs = relations.Where(relation => relation.RelationType == InvoiceRelationType.Predecessor).Select(relation => relation.RelatedInvoiceID).ToList();
-				invoice.SuccessorInvoiceIDs = relations.Where(relation => relation.RelationType == InvoiceRelationType.Successor).Select(relation => relation.RelatedInvoiceID).ToList();
-				invoice.RelatedInvoiceIDs = relations.Where(relation => relation.RelationType == InvoiceRelationType.Related).Select(relation => relation.RelatedInvoiceID).ToList();
+				invoice.PredecessorInvoiceIDs = relations.Where(relation => relation.RelationType == InvoiceRelationType.Predecessor).Select(relation => relation.ReferencesInvoiceID).ToList();
+				invoice.SuccessorInvoiceIDs = relations.Where(relation => relation.RelationType == InvoiceRelationType.Successor).Select(relation => relation.ReferencesInvoiceID).ToList();
+				invoice.RelatedInvoiceIDs = relations.Where(relation => relation.RelationType == InvoiceRelationType.Related).Select(relation => relation.ReferencesInvoiceID).ToList();
 			}
+
+			if (invoiceesByInvoiceID.TryGetValue(invoice.InvoiceID, out var invoiceeLines))
+				invoice.Invoicee = invoiceeLines.OrderBy(line => line.LineNumber).Select(line => line.InvoiceeLine).ToList();
 
 			if (itemsByInvoiceID.TryGetValue(invoice.InvoiceID, out var items))
 				invoice.Items = items.OrderBy(item => item.Sequence).Select(InvoiceItem.Rehydrate).ToList();

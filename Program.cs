@@ -17,26 +17,45 @@ class Program
 			return;
 		}
 
+		var database = new Database();
+
+		int invoiceID;
+
 		string invoiceFilePath = args[0];
 
 		if (!File.Exists(invoiceFilePath))
 		{
-			Console.WriteLine("Couldn't find file: {0}", invoiceFilePath);
-			return;
+			if (invoiceFilePath.StartsWith("db:"))
+			{
+				string invoiceNumber = invoiceFilePath.Substring(3);
+
+				invoiceID = database.GetInvoiceIDByInvoiceNumber(invoiceNumber);
+
+				Console.WriteLine("Invoice #{0} has ID {1}", invoiceNumber, invoiceID);
+			}
+			else
+			{
+				Console.WriteLine("Couldn't find file: {0}", invoiceFilePath);
+				return;
+			}
+		}
+		else
+		{
+			//new Application().Run(new MainWindow());
+			var serializer = new XmlSerializer(typeof(Invoice));
+
+			Invoice invoiceFromFile;
+
+			using (var stream = File.OpenRead(invoiceFilePath))
+				invoiceFromFile = (Invoice)serializer.Deserialize(stream)!;
+
+			database.SaveInvoice(invoiceFromFile);
+
+			invoiceID = invoiceFromFile.InvoiceID;
 		}
 
-		//new Application().Run(new MainWindow());
-		var serializer = new XmlSerializer(typeof(Invoice));
+		var invoice = database.LoadInvoice(invoiceID);
 
-		Invoice invoice;
-
-		using (var stream = File.OpenRead(invoiceFilePath))
-			invoice = (Invoice)serializer.Deserialize(stream)!;
-
-		var database = new Database();
-
-		database.SaveInvoice(invoice);
-		/*
 		var renderer = new InvoiceRenderer();
 
 		var renderedInvoice = renderer.RenderImage(invoice);
@@ -49,7 +68,6 @@ class Program
 			encoder.Save(outputStream);
 
 		Print(renderedInvoice);
-		*/
 	}
 
 	static void Print(BitmapSource image)
