@@ -8,6 +8,7 @@ public enum PaymentType
 
 	Cash,
 	eTransfer,
+	WireTransfer,
 	DebitCard,
 	CreditCard,
 	MasterCard,

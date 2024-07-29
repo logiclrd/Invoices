@@ -27,6 +27,7 @@ public class Invoice
 	public List<Payment> Payments = new List<Payment>();
 
 	public List<string> Notes = new List<string>();
+	public List<string> InternalNotes = new List<string>();
 
 	public List<int> PredecessorInvoiceIDs = new List<int>();
 	public List<int> SuccessorInvoiceIDs = new List<int>();

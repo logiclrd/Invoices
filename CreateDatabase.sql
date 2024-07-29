@@ -103,14 +103,15 @@ VALUES
 (1, N'Custom'),
 (2, N'Cash'),
 (3, N'e-Transfer'),
-(4, N'Debit Card'),
-(5, N'Credit Card'),
-(6, N'MasterCard'),
-(7, N'Visa'),
-(8, N'American Express'),
-(9, N'Discover'),
-(10, N'JCB'),
-(11, N'UnionPay')
+(4, N'Wire Transfer'),
+(5, N'Debit Card'),
+(6, N'Credit Card'),
+(7, N'MasterCard'),
+(8, N'Visa'),
+(9, N'American Express'),
+(10, N'Discover'),
+(11, N'JCB'),
+(12, N'UnionPay')
 
 CREATE TABLE InvoicePayments
 (
@@ -121,6 +122,7 @@ CREATE TABLE InvoicePayments
     PaymentTypeCustom NVARCHAR(100)      NULL,
     ReceivedDateTime  DATETIME2          NULL,
     Amount            DECIMAL(18, 2) NOT NULL,
+    ReferenceNumber   NVARCHAR(50)       NULL,
 
     CONSTRAINT FK_InvoicePayments_InvoiceID FOREIGN KEY (InvoiceID) REFERENCES Invoices(InvoiceID),
     CONSTRAINT FK_InvoicePayments_PaymentTypeID FOREIGN KEY (PaymentTypeID) REFERENCES PaymentTypes(PaymentTypeID)
@@ -128,10 +130,11 @@ CREATE TABLE InvoicePayments
 
 CREATE TABLE InvoiceNotes
 (
-    RowID     INT           NOT NULL IDENTITY(1, 1) PRIMARY KEY,
-    InvoiceID INT           NOT NULL,
-    Sequence  INT           NOT NULL,
-    TextLine  NVARCHAR(200) NOT NULL,
+    RowID      INT           NOT NULL IDENTITY(1, 1) PRIMARY KEY,
+    InvoiceID  INT           NOT NULL,
+    Sequence   INT           NOT NULL,
+    TextLine   NVARCHAR(200) NOT NULL,
+    IsInternal BIT           NOT NULL,
 
     CONSTRAINT FK_InvoiceNotes_InvoiceID FOREIGN KEY (InvoiceID) REFERENCES Invoices(InvoiceID)
 )

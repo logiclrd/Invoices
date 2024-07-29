@@ -92,7 +92,7 @@ public class Database : IDisposable
 				cmd.Parameters.Add("@InvoiceStateDescription", SqlDbType.NVarChar, 250).Value = invoice.StateDescription;
 				cmd.Parameters.Add("@PayableTo", SqlDbType.NVarChar, 250).Value = invoice.PayableTo;
 				cmd.Parameters.Add("@ProjectName", SqlDbType.NVarChar, 250).Value = invoice.ProjectName;
-				cmd.Parameters.Add("@DueDate", SqlDbType.DateTime2).Value = invoice.DueDate;
+				cmd.Parameters.Add("@DueDate", SqlDbType.DateTime2).Value = invoice.DueDate.HasValue ? invoice.DueDate : DBNull.Value;
 
 				invoiceID = (int)cmd.ExecuteScalar();
 
@@ -235,6 +235,8 @@ public class Database : IDisposable
 
 					sequenceParam.Value = i;
 					taxIDParam.Value = tax.TaxID;
+
+					cmd.ExecuteNonQuery();
 				}
 
 				cmd.Parameters.Clear();
@@ -242,7 +244,7 @@ public class Database : IDisposable
 
 			void InsertInvoicePayments()
 			{
-				cmd.CommandText = "INSERT INTO InvoicePayments (InvoiceID, Sequence, PaymentTypeID, PaymentTypeCustom, ReceivedDateTime, Amount) VALUES (@InvoiceID, @Sequence, @PaymentTypeID, @PaymentTypeCustom, @ReceivedDateTime, @Amount)";
+				cmd.CommandText = "INSERT INTO InvoicePayments (InvoiceID, Sequence, PaymentTypeID, PaymentTypeCustom, ReceivedDateTime, Amount, ReferenceNumber) VALUES (@InvoiceID, @Sequence, @PaymentTypeID, @PaymentTypeCustom, @ReceivedDateTime, @Amount, @ReferenceNumber)";
 
 				cmd.Parameters.Add("@InvoiceID", SqlDbType.Int).Value = invoiceID;
 
@@ -251,6 +253,7 @@ public class Database : IDisposable
 				var paymentTypeCustomParam = cmd.Parameters.Add("@PaymentTypeCustom", SqlDbType.NVarChar);
 				var receivedDateTimeParam = cmd.Parameters.Add("@ReceivedDateTime", SqlDbType.DateTime2);
 				var amountParam = cmd.Parameters.Add("@Amount", SqlDbType.Decimal);
+				var referenceNumberParam = cmd.Parameters.Add("@ReferenceNumber", SqlDbType.NVarChar);
 
 				for (int i=0; i < invoice.Payments.Count; i++)
 				{
@@ -261,6 +264,7 @@ public class Database : IDisposable
 					paymentTypeCustomParam.Value = payment.PaymentTypeCustom ?? (object)DBNull.Value;
 					receivedDateTimeParam.Value = payment.ReceivedDateTime;
 					amountParam.Value = payment.Amount;
+					referenceNumberParam.Value = payment.ReferenceNumber ?? (object)DBNull.Value;
 
 					cmd.ExecuteNonQuery();
 				}
@@ -270,14 +274,27 @@ public class Database : IDisposable
 
 			void InsertInvoiceNotes()
 			{
-				cmd.CommandText = "INSERT INTO InvoiceNotes (InvoiceID, Sequence, TextLine) VALUES (@InvoiceID, @Sequence, @TextLine)";
+				cmd.CommandText = "INSERT INTO InvoiceNotes (InvoiceID, Sequence, TextLine, IsInternal) VALUES (@InvoiceID, @Sequence, @TextLine, @IsInternal)";
 
 				cmd.Parameters.Add("@InvoiceID", SqlDbType.Int).Value = invoiceID;
 
 				var sequenceParam = cmd.Parameters.Add("@Sequence", SqlDbType.Int);
 				var textLineParam = cmd.Parameters.Add("@TextLine", SqlDbType.NVarChar);
+				var isInternalParam = cmd.Parameters.Add("@IsInternal", SqlDbType.Bit);
+
+				isInternalParam.Value = false;
 
 				for (int i=0; i < invoice.Notes.Count; i++)
+				{
+					sequenceParam.Value = i;
+					textLineParam.Value = invoice.Notes[i];
+
+					cmd.ExecuteNonQuery();
+				}
+
+				isInternalParam.Value = true;
+
+				for (int i=0; i < invoice.InternalNotes.Count; i++)
 				{
 					sequenceParam.Value = i;
 					textLineParam.Value = invoice.Notes[i];
@@ -453,7 +470,7 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 		}
 	}
 
-	IEnumerable<(int InvoiceID, int Sequence, PaymentType PaymentType, string? PaymentTypeCustom, DateTime? ReceivedDateTime, decimal Amount)> ReadInvoicePayments(SqlDataReader reader)
+	IEnumerable<(int InvoiceID, int Sequence, PaymentType PaymentType, string? PaymentTypeCustom, DateTime? ReceivedDateTime, decimal Amount, string? referenceNumber)> ReadInvoicePayments(SqlDataReader reader)
 	{
 		int invoiceID_ordinal = reader.GetOrdinal("InvoiceID");
 		int sequence_ordinal = reader.GetOrdinal("Sequence");
@@ -461,6 +478,7 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 		int paymentTypeCustom_ordinal = reader.GetOrdinal("PaymentTypeCustom");
 		int receivedDateTime_ordinal = reader.GetOrdinal("ReceivedDateTime");
 		int amount_ordinal = reader.GetOrdinal("Amount");
+		int referenceNumber_ordinal = reader.GetOrdinal("ReferenceNumber");
 
 		while (reader.Read())
 		{
@@ -472,16 +490,18 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 			string? paymentTypeCustom = reader.IsDBNull(paymentTypeCustom_ordinal) ? default : reader.GetString(paymentTypeCustom_ordinal);
 			DateTime? receivedDateTime = reader.IsDBNull(receivedDateTime_ordinal) ? default : reader.GetDateTime(receivedDateTime_ordinal);
 			decimal amount = reader.GetDecimal(amount_ordinal);
+			string? referenceNumber = reader.IsDBNull(referenceNumber_ordinal) ? default : reader.GetString(referenceNumber_ordinal);
 			
-			yield return (invoiceID, sequence, (PaymentType)paymentTypeID, paymentTypeCustom, receivedDateTime, amount);
+			yield return (invoiceID, sequence, (PaymentType)paymentTypeID, paymentTypeCustom, receivedDateTime, amount, referenceNumber);
 		}
 	}
 
-	IEnumerable<(int InvoiceID, int Sequence, string TextLine)> ReadInvoiceNotes(SqlDataReader reader)
+	IEnumerable<(int InvoiceID, int Sequence, string TextLine, bool IsInternal)> ReadInvoiceNotes(SqlDataReader reader)
 	{
 		int invoiceID_ordinal = reader.GetOrdinal("InvoiceID");
 		int sequence_ordinal = reader.GetOrdinal("Sequence");
 		int textLine_ordinal = reader.GetOrdinal("TextLine");
+		int isInternal_ordinal = reader.GetOrdinal("IsInternal");
 
 		while (reader.Read())
 		{
@@ -490,8 +510,9 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 			int invoiceID = reader.GetInt32(invoiceID_ordinal);
 			int sequence = reader.GetInt32(sequence_ordinal);
 			string textLine = reader.GetString(textLine_ordinal);
+			bool isInternal = reader.GetBoolean(isInternal_ordinal);
 
-			yield return (invoiceID, sequence, textLine);
+			yield return (invoiceID, sequence, textLine, isInternal);
 		}
 	}
 
@@ -592,7 +613,10 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 				invoice.Payments = payments.OrderBy(payment => payment.Sequence).Select(Payment.Rehydrate).ToList();
 
 			if (notesByInvoiceID.TryGetValue(invoice.InvoiceID, out var notes))
-				invoice.Notes = notes.OrderBy(note => note.Sequence).Select(note => note.TextLine).ToList();
+			{
+				invoice.Notes = notes.Where(note => note.IsInternal == false).OrderBy(note => note.Sequence).Select(note => note.TextLine).ToList();
+				invoice.InternalNotes = notes.Where(note => note.IsInternal == true).OrderBy(note => note.Sequence).Select(note => note.TextLine).ToList();
+			}
 
 			yield return invoice;
 		}
