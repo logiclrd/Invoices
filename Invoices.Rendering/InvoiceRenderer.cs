@@ -8,7 +8,9 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace Invoices;
+namespace Invoices.Rendering;
+
+using Invoices.Core;
 
 public class InvoiceRenderer
 {
@@ -158,7 +160,7 @@ public class InvoiceRenderer
 	{
 		var plan = new RenderPlan();
 
-		plan.Items.Add(new RenderPlanItem(ItemType.Image, @"C:\code\Invoices\Logo elements receipt.png"));
+		plan.Items.Add(new RenderPlanItem(ItemType.Image, Assets.GetPath("Logo elements receipt.png")));
 
 		string invoiceNumber = "Invoice #" + invoice.InvoiceNumber;
 		string invoiceDate = invoice.InvoiceDate.ToString("yyyy-MM-dd");
@@ -320,7 +322,7 @@ public class InvoiceRenderer
 
 		plan.Items.Add(new RenderPlanItem(ItemType.Text, ""));
 		plan.Items.Add(new RenderPlanItem(ItemType.Text, ""));
-		plan.Items.Add(new RenderPlanItem(ItemType.Image, @"C:\code\Invoices\White line.png"));
+		plan.Items.Add(new RenderPlanItem(ItemType.Image, Assets.GetPath("White line.png")));
 
 		return plan;
 	}

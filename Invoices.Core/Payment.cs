@@ -1,6 +1,6 @@
 using System;
 
-namespace Invoices;
+namespace Invoices.Core;
 
 public class Payment
 {

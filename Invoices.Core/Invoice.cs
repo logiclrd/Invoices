@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Invoices;
+namespace Invoices.Core;
 
 public class Invoice
 {

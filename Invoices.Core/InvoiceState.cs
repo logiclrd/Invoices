@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace Invoices;
+namespace Invoices.Core;
 
 public enum InvoiceState
 {

@@ -1,4 +1,4 @@
-namespace Invoices;
+namespace Invoices.Core;
 
 public enum PaymentType
 {

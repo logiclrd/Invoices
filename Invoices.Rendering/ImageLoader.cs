@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Windows.Media.Imaging;
 
-namespace Invoices;
+namespace Invoices.Rendering;
 
 public class ImageLoader
 {

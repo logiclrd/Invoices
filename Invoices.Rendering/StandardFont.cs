@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
 
-namespace Invoices;
+namespace Invoices.Rendering;
 
 public class StandardFont
 {

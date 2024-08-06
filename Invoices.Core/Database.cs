@@ -5,7 +5,7 @@ using System.Linq;
 
 using Microsoft.Data.SqlClient;
 
-namespace Invoices;
+namespace Invoices.Core;
 
 public class Database : IDisposable
 {

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>library</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Update="Logo elements coloured.png" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Logo elements receipt.png" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="White line.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Invoices.Core\Invoices.Core.csproj" />
+  </ItemGroup>
+</Project>

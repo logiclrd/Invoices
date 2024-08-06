@@ -1,10 +1,13 @@
 using System;
 using System.IO;
 using System.Xml.Serialization;
-using System.Windows.Controls;
-using System.Windows.Media.Imaging;
 
-namespace Invoices;
+namespace Invoices.Console;
+
+using Konsole = System.Console;
+
+using Invoices.Core;
+using Invoices.Rendering;
 
 class Program
 {
@@ -13,7 +16,7 @@ class Program
 	{
 		if (args.Length == 0)
 		{
-			Console.WriteLine("Usage: Invoices <invoicefile.xml>");
+			Konsole.WriteLine("Usage: Invoices <invoicefile.xml>");
 			return;
 		}
 
@@ -31,11 +34,11 @@ class Program
 
 				invoiceID = database.GetInvoiceIDByInvoiceNumber(invoiceNumber);
 
-				Console.WriteLine("Invoice #{0} has ID {1}", invoiceNumber, invoiceID);
+				Konsole.WriteLine("Invoice #{0} has ID {1}", invoiceNumber, invoiceID);
 			}
 			else
 			{
-				Console.WriteLine("Couldn't find file: {0}", invoiceFilePath);
+				Konsole.WriteLine("Couldn't find file: {0}", invoiceFilePath);
 				return;
 			}
 		}
@@ -60,31 +63,7 @@ class Program
 
 		var renderedInvoice = renderer.RenderImage(invoice);
 
-		var encoder = new PngBitmapEncoder();
-
-		encoder.Frames.Add(BitmapFrame.Create(renderedInvoice));
-
-		using (var outputStream = File.OpenWrite("Invoice #" + invoice.InvoiceNumber + ".png"))
-			encoder.Save(outputStream);
-
-		Print(renderedInvoice);
-	}
-
-	static void Print(BitmapSource image)
-	{
-		var printDialog = new PrintDialog();
-
-		bool? result = printDialog.ShowDialog();
-
-		if (result ?? false)
-		{
-			var imagePresenter = new Image();
-
-			imagePresenter.Source = image;
-			imagePresenter.HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch;
-			imagePresenter.VerticalAlignment = System.Windows.VerticalAlignment.Top;
-
-			printDialog.PrintVisual(imagePresenter, "Receipt");
-		}
+		ImageUtility.SavePng(renderedInvoice, "Invoice #" + invoice.InvoiceNumber + ".png");
+		PrintUtility.Print(renderedInvoice);
 	}
 }
