@@ -297,7 +297,7 @@ public class Database : IDisposable
 				for (int i=0; i < invoice.InternalNotes.Count; i++)
 				{
 					sequenceParam.Value = i;
-					textLineParam.Value = invoice.Notes[i];
+					textLineParam.Value = invoice.InternalNotes[i];
 
 					cmd.ExecuteNonQuery();
 				}

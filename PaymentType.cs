@@ -9,6 +9,7 @@ public enum PaymentType
 	Cash,
 	eTransfer,
 	WireTransfer,
+	PayPal,
 	DebitCard,
 	CreditCard,
 	MasterCard,

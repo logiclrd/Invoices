@@ -104,14 +104,15 @@ VALUES
 (2, N'Cash'),
 (3, N'e-Transfer'),
 (4, N'Wire Transfer'),
-(5, N'Debit Card'),
-(6, N'Credit Card'),
-(7, N'MasterCard'),
-(8, N'Visa'),
-(9, N'American Express'),
-(10, N'Discover'),
-(11, N'JCB'),
-(12, N'UnionPay')
+(5, N'PayPal'),
+(6, N'Debit Card'),
+(7, N'Credit Card'),
+(8, N'MasterCard'),
+(9, N'Visa'),
+(10, N'American Express'),
+(11, N'Discover'),
+(12, N'JCB'),
+(13 N'UnionPay')
 
 CREATE TABLE InvoicePayments
 (
@@ -122,7 +123,7 @@ CREATE TABLE InvoicePayments
     PaymentTypeCustom NVARCHAR(100)      NULL,
     ReceivedDateTime  DATETIME2          NULL,
     Amount            DECIMAL(18, 2) NOT NULL,
-    ReferenceNumber   NVARCHAR(50)       NULL,
+    ReferenceNumber   NVARCHAR(100)      NULL,
 
     CONSTRAINT FK_InvoicePayments_InvoiceID FOREIGN KEY (InvoiceID) REFERENCES Invoices(InvoiceID),
     CONSTRAINT FK_InvoicePayments_PaymentTypeID FOREIGN KEY (PaymentTypeID) REFERENCES PaymentTypes(PaymentTypeID)
