@@ -2,10 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:converter="clr-namespace:Invoices.Interface.Converters"
              x:Class="Invoices.Interface.Controls.InvoiceList">
-    <DataGrid Name="dgList" ItemsSource="{Binding Invoices}" AutoGenerateColumns="false">
+    <DataGrid Name="dgList" ItemsSource="{Binding Invoices}" AutoGenerateColumns="false" LoadingRow="dgList_LoadingRow">
         <DataGrid.Columns>
             <DataGridTextColumn x:Name="dgtcInvoiceNumber" Header="#" Binding="{Binding InvoiceNumber}" />
-            <DataGridTextColumn x:Name="dgtcInvoicee" Header="Invoicee" Binding="{Binding Invoicee, Converter={converter:ListAsString}}" />
+            <DataGridTextColumn x:Name="dgtcInvoicee" Header="Invoicee" Binding="{Binding InvoiceeCustomer, Converter={converter:CustomerSummary}}" />
             <DataGridTextColumn x:Name="dgtcTotal" Header="Total (incl. Tax)" Binding="{Binding ., Converter={converter:InvoiceTotal}}" />
             <DataGridTextColumn x:Name="dgtcOutstanding" Header="Outstanding" Binding="{Binding ., Converter={converter:InvoiceOutstanding}}" />
         </DataGrid.Columns>

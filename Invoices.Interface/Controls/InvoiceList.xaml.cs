@@ -23,4 +23,26 @@ public partial class InvoiceList : UserControl
 		get => (IEnumerable<Invoice>)GetValue(InvoicesProperty);
 		set => SetValue(InvoicesProperty, value);
 	}
+
+	public event EventHandler<Invoice>? InvoiceActivated;
+
+	void dgList_LoadingRow(object? sender, DataGridRowEventArgs e)
+	{
+		e.Row.MouseDoubleClick +=
+			(_, innerE) =>
+			{
+				var invoice = e.Row.DataContext as Invoice;
+
+				if (invoice != null)
+				{
+					innerE.Handled = true;
+					InvoiceActivated?.Invoke(this, invoice);
+				}
+			};
+	}
+
+	public void ReloadInvoice(int invoiceID)
+	{
+		// TODO
+	}
 }

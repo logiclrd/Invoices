@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:Invoices.Interface.Controls"
         x:Class="Invoices.Interface.MainWindow">
-    <Grid>
-        <controls:InvoiceList x:Name="ilInvoices" />
+    <Grid Name="grdRoot">
+        <controls:InvoiceList x:Name="ilInvoices" InvoiceActivated="ilInvoices_InvoiceActivated" />
     </Grid>
 </Window>
