@@ -5,4 +5,7 @@
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Invoices.Core\Invoices.Core.csproj" />
+  </ItemGroup>
 </Project>

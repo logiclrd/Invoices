@@ -7,29 +7,29 @@ public class Invoice
 {
 	public int InvoiceID;
 
-	public string InvoiceNumber = "";
-	public DateTime InvoiceDate;
+	public string InvoiceNumber { get; set; } = "";
+	public DateTime InvoiceDate { get; set; }
 
-	public InvoiceState State;
-	public string StateDescription = "";
+	public InvoiceState State { get; set; }
+	public string StateDescription { get; set; } = "";
 
-	public List<string> Invoicee = new List<string>();
+	public List<string> Invoicee { get; set; } = new List<string>();
 
-	public string PayableTo = "Wizards of the Plains";
+	public string PayableTo { get; set; } = "Wizards of the Plains";
 
-	public string ProjectName = "";
+	public string ProjectName { get; set; } = "";
 
 	public DateTime? DueDate;
 
-	public List<InvoiceItem> Items = new List<InvoiceItem>();
+	public List<InvoiceItem> Items { get; set; } = new List<InvoiceItem>();
 
-	public List<Tax> Taxes = new List<Tax>();
-	public List<Payment> Payments = new List<Payment>();
+	public List<Tax> Taxes { get; set; } = new List<Tax>();
+	public List<Payment> Payments { get; set; } = new List<Payment>();
 
-	public List<string> Notes = new List<string>();
-	public List<string> InternalNotes = new List<string>();
+	public List<string> Notes { get; set; } = new List<string>();
+	public List<string> InternalNotes { get; set; } = new List<string>();
 
-	public List<int> PredecessorInvoiceIDs = new List<int>();
-	public List<int> SuccessorInvoiceIDs = new List<int>();
-	public List<int> RelatedInvoiceIDs = new List<int>();
+	public List<int> PredecessorInvoiceIDs { get; set; } = new List<int>();
+	public List<int> SuccessorInvoiceIDs { get; set; } = new List<int>();
+	public List<int> RelatedInvoiceIDs { get; set; } = new List<int>();
 }

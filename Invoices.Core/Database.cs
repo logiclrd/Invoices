@@ -353,6 +353,26 @@ public class Database : IDisposable
 		}
 	}
 
+	public List<Invoice> LoadInvoices()
+	{
+		var taxDefinitions = LoadTaxDefinitions();
+
+		using (var cmd = _connection.CreateCommand())
+		{
+			cmd.CommandText = @"
+SELECT * FROM InvoiceRelations
+SELECT * FROM InvoiceInvoicees
+SELECT * FROM InvoiceItems
+SELECT * FROM InvoiceTaxes
+SELECT * FROM InvoicePayments
+SELECT * FROM InvoiceNotes
+SELECT * FROM Invoices";
+
+			using (var reader = cmd.ExecuteReader())
+				return LoadInvoices(reader, taxDefinitions).ToList();
+		}
+	}
+
 	public Invoice LoadInvoice(int invoiceID)
 	{
 		var taxDefinitions = LoadTaxDefinitions();
