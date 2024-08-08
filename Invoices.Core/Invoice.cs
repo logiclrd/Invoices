@@ -13,7 +13,7 @@ public class Invoice
 	public InvoiceState State { get; set; }
 	public string StateDescription { get; set; } = "";
 
-	public List<string> Invoicee { get; set; } = new List<string>();
+	public Customer? InvoiceeCustomer { get; set; }
 
 	public string PayableTo { get; set; } = "Wizards of the Plains";
 

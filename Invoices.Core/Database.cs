@@ -67,6 +67,80 @@ public class Database : IDisposable
 		}
 	}
 
+	public Customer SaveCustomer(Customer customer)
+	{
+		using (var cmd = _connection.CreateCommand())
+		{
+			if (customer.CustomerID <= 0)
+			{
+				cmd.CommandText = "INSERT INTO Customers OUTPUT CustomerID DEFAULT VALUES";
+
+				var reader = cmd.ExecuteReader();
+
+				if (!reader.Read())
+					throw new Exception("Error: Expected result set inserting Customer");
+
+				int CustomerID_ordinal = reader.GetOrdinal("CustomerID");
+
+				customer.CustomerID = reader.GetInt32(CustomerID_ordinal);
+			}
+
+			UpsertCustomerLines(customer.CustomerID, customer.Name, CustomerLineType.Name);
+			UpsertCustomerLines(customer.CustomerID, customer.Address, CustomerLineType.Address);
+			UpsertCustomerLines(customer.CustomerID, customer.EmailAddresses, CustomerLineType.EmailAddress);
+			UpsertCustomerLines(customer.CustomerID, customer.PhoneNumbers, CustomerLineType.Phone);
+			UpsertCustomerLines(customer.CustomerID, customer.Notes, CustomerLineType.Note);
+
+			return customer;
+		}
+	}
+
+	void UpsertCustomerLines(int customerID, IEnumerable<string> lines, CustomerLineType lineType)
+	{
+		using (var cmd = _connection.CreateCommand())
+		{
+			cmd.CommandText = @"
+MERGE INTO CustomerLines
+  USING @Source AS Source
+     ON CustomerLines.CustomerID = @CustomerID
+    AND CustomerLines.LineTypeID = @LineTypeID
+    AND CustomerLines.Sequence = Source.Sequence
+  WHEN MATCHED THEN UPDATE SET LineText = Source.Value
+  WHEN NOT MATCHED BY TARGET
+    THEN INSERT
+         (
+           CustomerID,
+           LineTypeID,
+           Sequence,
+           LineText
+         )
+         VALUES
+         (
+           @CustomerID,
+           @LineTypeID,
+           Source.Sequence,
+           Source.LineText
+         )
+  WHEN NOT MATCHED BY SOURCE
+    THEN DELETE";
+
+			var sourceTable = new DataTable();
+
+			sourceTable.Columns.Add("Sequence", typeof(int));
+			sourceTable.Columns.Add("Value", typeof(string));
+
+			foreach (var line in lines)
+				sourceTable.Rows.Add(sourceTable.Rows.Count, line);
+
+			cmd.Parameters.Add("@CustomerID", SqlDbType.Int).Value = customerID;
+			cmd.Parameters.Add("@LineTypeID", SqlDbType.Int).Value = (int)lineType;
+
+			cmd.Parameters.Add("@Source", SqlDbType.Structured).Value = sourceTable;
+
+			cmd.ExecuteNonQuery();
+		}
+	}
+
 	public void SaveInvoice(Invoice invoice)
 	{
 		SaveInvoice(invoice, LoadTaxDefinitions());
@@ -78,18 +152,22 @@ public class Database : IDisposable
 
 		DeleteInvoice(invoice.InvoiceNumber);
 
+		if ((invoice.InvoiceeCustomer != null) && (invoice.InvoiceeCustomer.CustomerID <= 0))
+			invoice.InvoiceeCustomer = SaveCustomer(invoice.InvoiceeCustomer);
+
 		using (var cmd = _connection.CreateCommand())
 		{
 			int invoiceID = -1;
 
 			void InsertInvoices()
 			{
-				cmd.CommandText = "INSERT INTO Invoices (InvoiceNumber, InvoiceDate, InvoiceStateID, InvoiceStateDescription, PayableTo, ProjectName, DueDate) OUTPUT (INSERTED.InvoiceID) VALUES (@InvoiceNumber, @InvoiceDate, @InvoiceStateID, @InvoiceStateDescription, @PayableTo, @ProjectName, @DueDate)";
+				cmd.CommandText = "INSERT INTO Invoices (InvoiceNumber, InvoiceDate, InvoiceStateID, InvoiceStateDescription, InvoiceeCustomerID, PayableTo, ProjectName, DueDate) OUTPUT (INSERTED.InvoiceID) VALUES (@InvoiceNumber, @InvoiceDate, @InvoiceStateID, @InvoiceStateDescription, @InvoiceeCustomerID, @PayableTo, @ProjectName, @DueDate)";
 
 				cmd.Parameters.Add("@InvoiceNumber", SqlDbType.NVarChar, 10).Value = invoice.InvoiceNumber;
 				cmd.Parameters.Add("@InvoiceDate", SqlDbType.DateTime2).Value = invoice.InvoiceDate;
 				cmd.Parameters.Add("@InvoiceStateID", SqlDbType.Int).Value = (int)invoice.State;
 				cmd.Parameters.Add("@InvoiceStateDescription", SqlDbType.NVarChar, 250).Value = invoice.StateDescription;
+				cmd.Parameters.Add("@InvoiceeCustomerID", SqlDbType.Int).Value = (invoice.InvoiceeCustomer != null) ? invoice.InvoiceeCustomer.CustomerID : DBNull.Value;
 				cmd.Parameters.Add("@PayableTo", SqlDbType.NVarChar, 250).Value = invoice.PayableTo;
 				cmd.Parameters.Add("@ProjectName", SqlDbType.NVarChar, 250).Value = invoice.ProjectName;
 				cmd.Parameters.Add("@DueDate", SqlDbType.DateTime2).Value = invoice.DueDate.HasValue ? invoice.DueDate : DBNull.Value;
@@ -150,26 +228,6 @@ public class Database : IDisposable
 
 					invoiceIDParam.Value = relatedInvoiceID;
 					referencesInvoiceIDParam.Value = invoiceID;
-
-					cmd.ExecuteNonQuery();
-				}
-
-				cmd.Parameters.Clear();
-			}
-
-			void InsertInvoiceInvoicees()
-			{
-				cmd.CommandText = "INSERT INTO InvoiceInvoicees (InvoiceID, LineNumber, InvoiceeLine) VALUES (@InvoiceID, @LineNumber, @InvoiceeLine)";
-
-				cmd.Parameters.Add("@InvoiceID", SqlDbType.Int).Value = invoiceID;
-
-				var lineNumberParam = cmd.Parameters.Add("@LineNumber", SqlDbType.Int);
-				var invoiceeLineParam = cmd.Parameters.Add("@InvoiceeLine", SqlDbType.NVarChar);
-
-				for (int i=0; i < invoice.Invoicee.Count; i++)
-				{
-					lineNumberParam.Value = i;
-					invoiceeLineParam.Value = invoice.Invoicee[i];
 
 					cmd.ExecuteNonQuery();
 				}
@@ -308,7 +366,6 @@ public class Database : IDisposable
 			invoice.InvoiceID = invoiceID;
 
 			InsertInvoiceRelations();
-			InsertInvoiceInvoicees();
 			InsertInvoiceItems();
 			InsertInvoiceTaxes();
 			InsertInvoicePayments();
@@ -353,6 +410,77 @@ public class Database : IDisposable
 		}
 	}
 
+	public Dictionary<int, Customer> LoadCustomers()
+	{
+		using (var cmd = _connection.CreateCommand())
+		{
+			cmd.CommandText = "SELECT * FROM Customers; SELECT * FROM CustomerLines";
+
+			using (var reader = cmd.ExecuteReader())
+				return LoadCustomers(reader);
+		}
+	}
+
+	Dictionary<int, Customer> LoadCustomers(SqlDataReader reader)
+	{
+		IEnumerable<Customer> ReadCustomers()
+		{
+			int CustomerID_ordinal = reader.GetOrdinal("CustomerID");
+
+			while (reader.Read())
+			{
+				var customer = new Customer();
+
+				customer.CustomerID = reader.GetInt32(CustomerID_ordinal);
+
+				yield return customer;
+			}
+		}
+
+		IEnumerable<(int CustomerID, CustomerLineType LineType, string LineText)> ReadCustomerLines()
+		{
+			int CustomerID_ordinal = reader.GetOrdinal("CustomerID");
+			int LineTypeID_ordinal = reader.GetOrdinal("LineTypeID");
+			int LineText_ordinal = reader.GetOrdinal("LineText");
+
+			while (reader.Read())
+			{
+				int CustomerID = reader.GetInt32(CustomerID_ordinal);
+				int LineTypeID = reader.GetInt32(LineTypeID_ordinal);
+				string LineText = reader.GetString(LineText_ordinal);
+
+				var LineType = (CustomerLineType)LineTypeID;
+
+				yield return (CustomerID, LineType, LineText);
+			}
+		}
+
+		var customers = new Dictionary<int, Customer>();
+
+		foreach (var customer in ReadCustomers())
+			customers.Add(customer.CustomerID, customer);
+
+		if (!reader.NextResult())
+			throw new Exception("Error: Expected result set not present (CustomerLines)");
+
+		foreach (var customerLine in ReadCustomerLines())
+		{
+			if (customers.TryGetValue(customerLine.CustomerID, out var customer))
+			{
+				switch (customerLine.LineType)
+				{
+					case CustomerLineType.Name: customer.Name.Add(customerLine.LineText); break;
+					case CustomerLineType.Address: customer.Address.Add(customerLine.LineText); break;
+					case CustomerLineType.EmailAddress: customer.EmailAddresses.Add(customerLine.LineText); break;
+					case CustomerLineType.Phone: customer.PhoneNumbers.Add(customerLine.LineText); break;
+					case CustomerLineType.Note: customer.Notes.Add(customerLine.LineText); break;
+				}
+			}
+		}
+
+		return customers;
+	}
+
 	public List<Invoice> LoadInvoices()
 	{
 		var taxDefinitions = LoadTaxDefinitions();
@@ -360,8 +488,9 @@ public class Database : IDisposable
 		using (var cmd = _connection.CreateCommand())
 		{
 			cmd.CommandText = @"
+SELECT * FROM Customers WHERE CustomerID IN (SELECT InvoiceeCustomerID FROM Invoices)
+SELECT * FROM CustomerLines WHERE CustomerID IN (SELECT InvoiceeCustomerID FROM Invoices) ORDER BY Sequence
 SELECT * FROM InvoiceRelations
-SELECT * FROM InvoiceInvoicees
 SELECT * FROM InvoiceItems
 SELECT * FROM InvoiceTaxes
 SELECT * FROM InvoicePayments
@@ -369,7 +498,14 @@ SELECT * FROM InvoiceNotes
 SELECT * FROM Invoices";
 
 			using (var reader = cmd.ExecuteReader())
-				return LoadInvoices(reader, taxDefinitions).ToList();
+			{
+				var customers = LoadCustomers(reader);
+
+				if (!reader.NextResult())
+					throw new Exception("Error: expected result sets not present");
+
+				return LoadInvoices(reader, customers, taxDefinitions).ToList();
+			}
 		}
 	}
 
@@ -377,28 +513,54 @@ SELECT * FROM Invoices";
 	{
 		var taxDefinitions = LoadTaxDefinitions();
 
-		return LoadInvoice(invoiceID, taxDefinitions);
+		return LoadInvoice(invoiceID, default, taxDefinitions);
 	}
 
-	public Invoice LoadInvoice(int invoiceID, Dictionary<int, TaxDefinition> taxDefinitions)
+	public Invoice LoadInvoice(int invoiceID, Dictionary<int, Customer>? customers, Dictionary<int, TaxDefinition> taxDefinitions)
 	{
 		Console.WriteLine("LoadInvoice({0})", invoiceID);
 
 		using (var cmd = _connection.CreateCommand())
 		{
-			cmd.CommandText = @"
+			bool loadCustomer = (customers == null);
+
+			if (!loadCustomer)
+			{
+				cmd.CommandText = @"
 SELECT * FROM InvoiceRelations WHERE InvoiceID = @InvoiceID;
-SELECT * FROM InvoiceInvoicees WHERE InvoiceID = @InvoiceID;
 SELECT * FROM InvoiceItems WHERE InvoiceID = @InvoiceID;
 SELECT * FROM InvoiceTaxes WHERE InvoiceID = @InvoiceID;
 SELECT * FROM InvoicePayments WHERE InvoiceID = @InvoiceID;
 SELECT * FROM InvoiceNotes WHERE InvoiceID = @InvoiceID;
 SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
+			}
+			else
+			{
+				cmd.CommandText = @"
+SELECT * FROM Customers WHERE CustomerID IN (SELECT InvoiceeCustomerID FROM Invoices WHERE InvoiceID = @InvoiceID)
+SELECT * FROM CustomerLines WHERE CustomerID IN (SELECT InvoiceeCustomerID FROM Invoices WHERE InvoiceID = @InvoiceID) ORDER BY Sequence
+SELECT * FROM InvoiceRelations WHERE InvoiceID = @InvoiceID;
+SELECT * FROM InvoiceItems WHERE InvoiceID = @InvoiceID;
+SELECT * FROM InvoiceTaxes WHERE InvoiceID = @InvoiceID;
+SELECT * FROM InvoicePayments WHERE InvoiceID = @InvoiceID;
+SELECT * FROM InvoiceNotes WHERE InvoiceID = @InvoiceID;
+SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
+			}
 
 			cmd.Parameters.Add("@InvoiceID", SqlDbType.Int).Value = invoiceID;
 
 			using (var reader = cmd.ExecuteReader())
-				return LoadInvoices(reader, taxDefinitions).Single();
+			{
+				if (loadCustomer)
+				{
+					customers = LoadCustomers(reader);
+
+					if (!reader.NextResult())
+						throw new Exception("Error: Expected result set missing after reading customer before invoice data");
+				}
+
+				return LoadInvoices(reader, customers!, taxDefinitions).Single();
+			}
 		}
 	}
 
@@ -429,24 +591,6 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 			int referencesInvoiceID = reader.GetInt32(referencesInvoiceID_ordinal);
 
 			yield return (invoiceID, relationType, referencesInvoiceID);
-		}
-	}
-
-	IEnumerable<(int InvoiceID, int LineNumber, string InvoiceeLine)> ReadInvoiceInvoicees(SqlDataReader reader)
-	{
-		int invoiceID_ordinal = reader.GetOrdinal("InvoiceID");
-		int lineNumber_ordinal = reader.GetOrdinal("LineNumber");
-		int invoiceeLine_ordinal = reader.GetOrdinal("InvoiceeLine");
-
-		while (reader.Read())
-		{
-			Console.WriteLine("InvoiceInvoicees");
-
-			int invoiceID = reader.GetInt32(invoiceID_ordinal);
-			int lineNumber = reader.GetInt32(lineNumber_ordinal);
-			string invoiceeLine = reader.GetString(invoiceeLine_ordinal);
-
-			yield return (invoiceID, lineNumber, invoiceeLine);
 		}
 	}
 
@@ -536,13 +680,14 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 		}
 	}
 
-	IEnumerable<Invoice> ReadInvoices(SqlDataReader reader)
+	IEnumerable<Invoice> ReadInvoices(SqlDataReader reader, Dictionary<int, Customer> customers)
 	{
 		int invoiceID_ordinal = reader.GetOrdinal("InvoiceID");
 		int invoiceNumber_ordinal = reader.GetOrdinal("InvoiceNumber");
 		int invoiceDate_ordinal = reader.GetOrdinal("InvoiceDate");
 		int invoiceStateID_ordinal = reader.GetOrdinal("InvoiceStateID");
 		int invoiceStateDescription_ordinal = reader.GetOrdinal("InvoiceStateDescription");
+		int invoiceeCustomerID_ordinal = reader.GetOrdinal("InvoiceeCustomerID");
 		int payableTo_ordinal = reader.GetOrdinal("PayableTo");
 		int projectName_ordinal = reader.GetOrdinal("ProjectName");
 		int dueDate_ordinal = reader.GetOrdinal("DueDate");
@@ -556,9 +701,13 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 			DateTime invoiceDate = reader.GetDateTime(invoiceDate_ordinal);
 			InvoiceState state = (InvoiceState)reader.GetInt32(invoiceStateID_ordinal);
 			string stateDescription = reader.GetString(invoiceStateDescription_ordinal);
+			int invoiceeCustomerID = reader.GetInt32(invoiceeCustomerID_ordinal);
 			string payableTo = reader.GetString(payableTo_ordinal);
 			string projectName = reader.GetString(projectName_ordinal);
 			DateTime? dueDate = reader.IsDBNull(dueDate_ordinal) ? default : reader.GetDateTime(dueDate_ordinal);
+
+			if (!customers.TryGetValue(invoiceeCustomerID, out var customer))
+				customer = new Customer() { CustomerID = invoiceeCustomerID };
 
 			yield return
 				new Invoice()
@@ -568,6 +717,7 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 					InvoiceDate = invoiceDate,
 					State = state,
 					StateDescription = stateDescription,
+					InvoiceeCustomer = customer,
 					PayableTo = payableTo,
 					ProjectName = projectName,
 					DueDate = dueDate,
@@ -575,14 +725,9 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 		}
 	}
 
-	IEnumerable<Invoice> LoadInvoices(SqlDataReader reader, Dictionary<int, TaxDefinition> taxDefinitions)
+	IEnumerable<Invoice> LoadInvoices(SqlDataReader reader, Dictionary<int, Customer> customers, Dictionary<int, TaxDefinition> taxDefinitions)
 	{
 		var relationsByInvoiceID = ReadInvoiceRelations(reader).GroupBy(relation => relation.InvoiceID).ToDictionary(grouping => grouping.Key, grouping => grouping.AsEnumerable());
-
-		if (!reader.NextResult())
-			yield break;
-
-		var invoiceesByInvoiceID = ReadInvoiceInvoicees(reader).GroupBy(invoicee => invoicee.InvoiceID).ToDictionary(grouping => grouping.Key, grouping => grouping.AsEnumerable());
 
 		if (!reader.NextResult())
 			yield break;
@@ -607,7 +752,7 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 		if (!reader.NextResult())
 			yield break;
 
-		foreach (var invoice in ReadInvoices(reader))
+		foreach (var invoice in ReadInvoices(reader, customers))
 		{
 			if (relationsByInvoiceID.TryGetValue(invoice.InvoiceID, out var relations))
 			{
@@ -615,9 +760,6 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 				invoice.SuccessorInvoiceIDs = relations.Where(relation => relation.RelationType == InvoiceRelationType.Successor).Select(relation => relation.ReferencesInvoiceID).ToList();
 				invoice.RelatedInvoiceIDs = relations.Where(relation => relation.RelationType == InvoiceRelationType.Related).Select(relation => relation.ReferencesInvoiceID).ToList();
 			}
-
-			if (invoiceesByInvoiceID.TryGetValue(invoice.InvoiceID, out var invoiceeLines))
-				invoice.Invoicee = invoiceeLines.OrderBy(line => line.LineNumber).Select(line => line.InvoiceeLine).ToList();
 
 			if (itemsByInvoiceID.TryGetValue(invoice.InvoiceID, out var items))
 				invoice.Items = items.OrderBy(item => item.Sequence).Select(InvoiceItem.Rehydrate).ToList();
@@ -650,8 +792,6 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 
 			cmd.CommandText = "DELETE FROM InvoiceRelations WHERE InvoiceID = @InvoiceID OR ReferencesInvoiceID = @InvoiceID";
 			cmd.ExecuteNonQuery();
-			cmd.CommandText = "DELETE FROM InvoiceInvoicees WHERE InvoiceID = @InvoiceID";
-			cmd.ExecuteNonQuery();
 			cmd.CommandText = "DELETE FROM InvoiceItems WHERE InvoiceID = @InvoiceID";
 			cmd.ExecuteNonQuery();
 			cmd.CommandText = "DELETE FROM InvoiceTaxes WHERE InvoiceID = @InvoiceID";
@@ -673,8 +813,6 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 			cmd.Parameters.Add("@InvoiceNumber", SqlDbType.NVarChar).Value = invoiceNumber;
 
 			cmd.CommandText = "DELETE FROM InvoiceRelations WHERE InvoiceID IN (SELECT InvoiceID FROM Invoices WHERE InvoiceNumber = @InvoiceNumber) OR ReferencesInvoiceID IN (SELECT InvoiceID FROM Invoices WHERE InvoiceNumber = @InvoiceNumber)";
-			cmd.ExecuteNonQuery();
-			cmd.CommandText = "DELETE FROM InvoiceInvoicees WHERE InvoiceID IN (SELECT InvoiceID FROM Invoices WHERE InvoiceNumber = @InvoiceNumber)";
 			cmd.ExecuteNonQuery();
 			cmd.CommandText = "DELETE FROM InvoiceItems WHERE InvoiceID IN (SELECT InvoiceID FROM Invoices WHERE InvoiceNumber = @InvoiceNumber)";
 			cmd.ExecuteNonQuery();
