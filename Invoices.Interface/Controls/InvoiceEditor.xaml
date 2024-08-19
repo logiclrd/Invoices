@@ -1,20 +1,88 @@
 <UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:core="clr-namespace:Invoices.Core;assembly=Invoices.Core"
              x:Class="Invoices.Interface.Controls.InvoiceEditor">
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <WrapPanel>
+                <WrapPanel.Resources>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Margin" Value="12" />
+                    </Style>
+                </WrapPanel.Resources>
 
-        <Label Grid.Row="0" Grid.Column="0">Invoice #</Label>
-        <TextBox Grid.Row="1" Grid.Column="0" />
+                <StackPanel>
+                    <Label>Invoice #</Label>
+                    <TextBox Name="txtInvoiceNumber" />
+                </StackPanel>
 
-        <Label Grid.Row="0" Grid.Column="1">Date</Label>
-        <DatePicker Grid.Row="1" Grid.Column="1" />
-    </Grid>
+                <StackPanel>
+                    <Label>Date</Label>
+                    <DatePicker Name="dtpInvoiceDate" />
+                </StackPanel>
+
+                <StackPanel>
+                    <Label>Customer</Label>
+                    <TextBox Name="txtCustomer" AcceptsReturn="true" IsReadOnly="true" MouseDoubleClick="txtCustomer_DoubleClick" />
+                </StackPanel>
+
+                <StackPanel>
+                    <Label>State</Label>
+                    <ComboBox Name="cboState">
+                        <x:Static Member="core:InvoiceState.Ready" />
+                        <x:Static Member="core:InvoiceState.Waiting" />
+                        <x:Static Member="core:InvoiceState.Finished" />
+                    </ComboBox>
+                    <TextBox Name="txtStateDescription" Width="400" />
+                </StackPanel>
+            </WrapPanel>
+
+            <StackPanel Margin="12">
+                <Label>Items</Label>
+                <DataGrid Name="dgItems" CellEditEnding="dgItems_CellEditEnding" CanUserAddRows="true" CanUserDeleteRows="true">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn x:Name="dgtcDescription" Width="500" Header="Description" Binding="{Binding Description}" />
+                        <DataGridTextColumn x:Name="dgtcQuantity" Header="Quantity" Binding="{Binding Quantity}" />
+                        <DataGridTemplateColumn x:Name="dgtcAtSign" Header="">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Label Content="@" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn x:Name="dgtcUnitPrice" Binding="{Binding UnitPrice}" />
+                        <DataGridTextColumn x:Name="dgtcSubtotal" IsReadOnly="true" Binding="{Binding LineTotal}" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </StackPanel>
+
+            <StackPanel Margin="12 100 12 12">
+                <Label>Taxes</Label>
+                <DataGrid Name="dgTaxes" >
+                    <DataGrid.Columns>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </StackPanel>
+
+            <StackPanel Margin="12 100 12 12">
+                <Label>Payments</Label>
+                <DataGrid Name="dgPayments">
+                    <DataGrid.Columns>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </StackPanel>
+
+            <StackPanel Margin="12">
+                <Label>Notes</Label>
+                <TextBox Name="txtNotes" AcceptsReturn="true" Height="100" />
+            </StackPanel>
+
+            <StackPanel Margin="12">
+                <Label>Internal Notes</Label>
+                <TextBox Name="txtInternalNotes" AcceptsReturn="true" Height="100" />
+            </StackPanel>
+
+            <!-- TODO: relations -->
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

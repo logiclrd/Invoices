@@ -1,4 +1,5 @@
 using System;
+using System.Windows;
 using System.Windows.Controls;
 
 namespace Invoices.Interface.Controls;
@@ -21,8 +22,40 @@ public partial class InvoiceEditor : UserControl
 		{
 			_invoice = value;
 
-			// TODO
+			if (value == null)
+			{
+				txtInvoiceNumber.Text = "";
+				dtpInvoiceDate.SelectedDate = null;
+				txtCustomer.Text = "";
+				cboState.SelectedValue = null;
+				txtStateDescription.Text = "";
+				dgItems.ItemsSource = null;
+
+				txtNotes.Text = "";
+				txtInternalNotes.Text = "";
+			}
+			else
+			{
+				txtInvoiceNumber.Text = value.InvoiceNumber;
+				dtpInvoiceDate.SelectedDate = value.InvoiceDate;
+				txtCustomer.Text = value.InvoiceeCustomer?.LongSummary ?? "";
+				cboState.SelectedValue = value.State;
+				txtStateDescription.Text = value.StateDescription;
+				dgItems.ItemsSource = value.Items;
+
+				txtNotes.Text = string.Join("\n", value.Notes);
+				txtInternalNotes.Text = string.Join("\n", value.InternalNotes);
+			}
 		}
+	}
+
+	void txtCustomer_DoubleClick(object? sender, RoutedEventArgs e)
+	{
+	}
+
+	void dgItems_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
+	{
+
 	}
 
 	public void Close()
