@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace Invoices.Interface.Controls;
 
@@ -22,32 +23,48 @@ public partial class InvoiceEditor : UserControl
 		{
 			_invoice = value;
 
-			if (value == null)
-			{
-				txtInvoiceNumber.Text = "";
-				dtpInvoiceDate.SelectedDate = null;
-				txtCustomer.Text = "";
-				cboState.SelectedValue = null;
-				txtStateDescription.Text = "";
-				dgItems.ItemsSource = null;
+			_loading = true;
 
-				txtNotes.Text = "";
-				txtInternalNotes.Text = "";
+			try
+			{
+				if (value == null)
+				{
+					txtInvoiceNumber.Text = "";
+					dtpInvoiceDate.SelectedDate = null;
+					txtCustomer.Text = "";
+					cboState.SelectedValue = null;
+					txtStateDescription.Text = "";
+					dgItems.ItemsSource = null;
+
+					txtNotes.Text = "";
+					txtInternalNotes.Text = "";
+				}
+				else
+				{
+					txtInvoiceNumber.Text = value.InvoiceNumber;
+					dtpInvoiceDate.SelectedDate = value.InvoiceDate;
+					txtCustomer.Text = value.InvoiceeCustomer?.LongSummary ?? "";
+					cboState.SelectedValue = value.State;
+					txtStateDescription.Text = value.StateDescription;
+					dgItems.ItemsSource = value.Items;
+
+					txtNotes.Text = string.Join("\n", value.Notes);
+					txtInternalNotes.Text = string.Join("\n", value.InternalNotes);
+				}
 			}
-			else
+			finally
 			{
-				txtInvoiceNumber.Text = value.InvoiceNumber;
-				dtpInvoiceDate.SelectedDate = value.InvoiceDate;
-				txtCustomer.Text = value.InvoiceeCustomer?.LongSummary ?? "";
-				cboState.SelectedValue = value.State;
-				txtStateDescription.Text = value.StateDescription;
-				dgItems.ItemsSource = value.Items;
-
-				txtNotes.Text = string.Join("\n", value.Notes);
-				txtInternalNotes.Text = string.Join("\n", value.InternalNotes);
+				_loading = false;
 			}
 		}
 	}
+
+	void txtInvoiceNumber_TextChanged(object? sender, TextChangedEventArgs e) => OnModified();
+	void dtpInvoiceDate_SelectedDateChanged(object? sender, SelectionChangedEventArgs e) => OnModified();
+	void cboState_SelectionChanged(object? sender, SelectionChangedEventArgs e) => OnModified();
+	void txtStateDescription_TextChanged(object? sender, TextChangedEventArgs e) => OnModified();
+	void txtNotes_TextChanged(object? sender, TextChangedEventArgs e) => OnModified();
+	void txtInternalNotes_TextChanged(object? sender, TextChangedEventArgs e) => OnModified();
 
 	void txtCustomer_DoubleClick(object? sender, RoutedEventArgs e)
 	{
@@ -58,10 +75,23 @@ public partial class InvoiceEditor : UserControl
 
 	}
 
-	public void Close()
+	void InvoiceEditor_PreviewKeyDown(object? sender, KeyEventArgs e)
 	{
-		Closed?.Invoke(this, EventArgs.Empty);
+		if (((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control) && (e.Key == Key.S))
+		{
+			e.Handled = true;
+			Save?.Invoke(this, EventArgs.Empty);
+		}
 	}
 
-	public event EventHandler? Closed;
+	bool _loading;
+
+	void OnModified()
+	{
+		if (!_loading)
+			Modified?.Invoke(this, EventArgs.Empty);
+	}
+
+	public event EventHandler? Modified;
+	public event EventHandler? Save;
 }

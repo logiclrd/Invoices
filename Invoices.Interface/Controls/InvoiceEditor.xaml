@@ -1,7 +1,8 @@
 <UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:core="clr-namespace:Invoices.Core;assembly=Invoices.Core"
-             x:Class="Invoices.Interface.Controls.InvoiceEditor">
+             x:Class="Invoices.Interface.Controls.InvoiceEditor"
+             PreviewKeyDown="InvoiceEditor_PreviewKeyDown">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel>
             <WrapPanel>
@@ -13,12 +14,12 @@
 
                 <StackPanel>
                     <Label>Invoice #</Label>
-                    <TextBox Name="txtInvoiceNumber" />
+                    <TextBox Name="txtInvoiceNumber" TextChanged="txtInvoiceNumber_TextChanged" />
                 </StackPanel>
 
                 <StackPanel>
                     <Label>Date</Label>
-                    <DatePicker Name="dtpInvoiceDate" />
+                    <DatePicker Name="dtpInvoiceDate" SelectedDateChanged="dtpInvoiceDate_SelectedDateChanged" />
                 </StackPanel>
 
                 <StackPanel>
@@ -28,12 +29,12 @@
 
                 <StackPanel>
                     <Label>State</Label>
-                    <ComboBox Name="cboState">
+                    <ComboBox Name="cboState" SelectionChanged="cboState_SelectionChanged">
                         <x:Static Member="core:InvoiceState.Ready" />
                         <x:Static Member="core:InvoiceState.Waiting" />
                         <x:Static Member="core:InvoiceState.Finished" />
                     </ComboBox>
-                    <TextBox Name="txtStateDescription" Width="400" />
+                    <TextBox Name="txtStateDescription" Width="400" TextChanged="txtStateDescription_TextChanged" />
                 </StackPanel>
             </WrapPanel>
 
@@ -74,12 +75,12 @@
 
             <StackPanel Margin="12">
                 <Label>Notes</Label>
-                <TextBox Name="txtNotes" AcceptsReturn="true" Height="100" />
+                <TextBox Name="txtNotes" AcceptsReturn="true" Height="100" TextChanged="txtNotes_TextChanged" />
             </StackPanel>
 
             <StackPanel Margin="12">
                 <Label>Internal Notes</Label>
-                <TextBox Name="txtInternalNotes" AcceptsReturn="true" Height="100" />
+                <TextBox Name="txtInternalNotes" AcceptsReturn="true" Height="100" TextChanged="txtInternalNotes_TextChanged" />
             </StackPanel>
 
             <!-- TODO: relations -->

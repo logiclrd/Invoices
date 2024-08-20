@@ -5,7 +5,7 @@ namespace Invoices.Core;
 
 public class InvoiceItem : INotifyPropertyChanged
 {
-	string _description;
+	string? _description;
 	int _quantity;
 	decimal _unitPrice;
 

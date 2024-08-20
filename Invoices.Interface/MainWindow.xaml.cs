@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Controls;
 
 namespace Invoices.Interface;
 
@@ -21,9 +22,6 @@ public partial class MainWindow : Window
 
 	void ilInvoices_InvoiceActivated(object? sender, Invoice invoice)
 	{
-		ilInvoices.IsEnabled = false;
-		ilInvoices.Visibility = Visibility.Collapsed;
-
 		var ieInvoice = new InvoiceEditor();
 
 		ieInvoice.HorizontalAlignment = HorizontalAlignment.Stretch;
@@ -31,15 +29,35 @@ public partial class MainWindow : Window
 
 		ieInvoice.Invoice = invoice;
 
-		grdRoot.Children.Add(ieInvoice);
+		var ithHeader = new InvoiceTabHeader();
 
-		ieInvoice.Closed +=
+		ithHeader.Title = "Invoice #" + invoice.InvoiceNumber;
+
+		var tiTab = new TabItem();
+
+		tiTab.Content = ieInvoice;
+		tiTab.Header = ithHeader;
+
+		tcRoot.Items.Add(tiTab);
+		tcRoot.SelectedItem = tiTab;
+
+		ieInvoice.Modified +=
 			(_, _) =>
 			{
-				grdRoot.Children.Remove(ieInvoice);
-				ilInvoices.Visibility = Visibility.Visible;
-				ilInvoices.IsEnabled = true;
+				ithHeader.IsModified = true;
+			};
+
+		ieInvoice.Save +=
+			(_, _) =>
+			{
 				ilInvoices.ReloadInvoice(invoice.InvoiceID);
+			};
+
+		ithHeader.Close +=
+			(_, _) =>
+			{
+				tcRoot.Items.Remove(tiTab);
+				tcRoot.SelectedIndex = 0;
 			};
 	}
 }
