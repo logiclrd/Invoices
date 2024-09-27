@@ -495,7 +495,7 @@ SELECT * FROM InvoiceItems
 SELECT * FROM InvoiceTaxes
 SELECT * FROM InvoicePayments
 SELECT * FROM InvoiceNotes
-SELECT * FROM Invoices";
+SELECT * FROM Invoices ORDER BY TRY_CAST(InvoiceNumber AS INT)";
 
 			using (var reader = cmd.ExecuteReader())
 			{

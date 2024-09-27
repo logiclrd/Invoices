@@ -80,8 +80,28 @@ public partial class InvoiceEditor : UserControl
 		if (((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control) && (e.Key == Key.S))
 		{
 			e.Handled = true;
+
+			TransferChangesToModel();
+
 			Save?.Invoke(this, EventArgs.Empty);
 		}
+	}
+
+	void TransferChangesToModel()
+	{
+		if (_invoice == null)
+			return;
+
+		_invoice.InvoiceNumber = txtInvoiceNumber.Text;
+		_invoice.InvoiceDate = dtpInvoiceDate.SelectedDate ?? DateTime.MinValue;
+		_invoice.State = (InvoiceState)cboState.SelectedValue;
+		_invoice.StateDescription = txtStateDescription.Text;
+
+		_invoice.Notes.Clear();
+		_invoice.Notes.AddRange(txtNotes.Text.Split('\n'));
+
+		_invoice.InternalNotes.Clear();
+		_invoice.InternalNotes.AddRange(txtInternalNotes.Text.Split('\n'));
 	}
 
 	bool _loading;

@@ -50,6 +50,8 @@ public partial class MainWindow : Window
 		ieInvoice.Save +=
 			(_, _) =>
 			{
+				_database.SaveInvoice(invoice);
+				ithHeader.IsModified = false;
 				ilInvoices.ReloadInvoice(invoice.InvoiceID);
 			};
 
