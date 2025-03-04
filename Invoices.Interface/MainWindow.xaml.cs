@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -18,7 +20,11 @@ public partial class MainWindow : Window
 		_database = new Database();
 
 		ilInvoices.Invoices = _database.LoadInvoices();
+
+		_allTaxes = _database.LoadTaxDefinitions().Values.ToArray();
 	}
+
+	TaxDefinition[] _allTaxes;
 
 	void ilInvoices_InvoiceActivated(object? sender, Invoice invoice)
 	{
@@ -26,6 +32,8 @@ public partial class MainWindow : Window
 
 		ieInvoice.HorizontalAlignment = HorizontalAlignment.Stretch;
 		ieInvoice.VerticalAlignment = VerticalAlignment.Stretch;
+
+		ieInvoice.LoadTaxes(_allTaxes);
 
 		ieInvoice.Invoice = invoice;
 
@@ -50,7 +58,16 @@ public partial class MainWindow : Window
 		ieInvoice.Save +=
 			(_, _) =>
 			{
-				_database.SaveInvoice(invoice);
+				try
+				{
+					_database.SaveInvoice(invoice);
+				}
+				catch (Exception e)
+				{
+					MessageBox.Show("Exception: " + e);
+					return;
+				}
+
 				ithHeader.IsModified = false;
 				ilInvoices.ReloadInvoice(invoice.InvoiceID);
 			};

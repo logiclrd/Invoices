@@ -1,8 +1,14 @@
 <UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:core="clr-namespace:Invoices.Core;assembly=Invoices.Core"
+             xmlns:interface="clr-namespace:Invoices.Interface"
+             xmlns:converter="clr-namespace:Invoices.Interface.Converters"
              x:Class="Invoices.Interface.Controls.InvoiceEditor"
              PreviewKeyDown="InvoiceEditor_PreviewKeyDown">
+    <UserControl.Resources>
+        <interface:TaxDefinitionList x:Key="AllTaxes" />
+        <interface:PaymentTypesList x:Key="AllPaymentTypes" />
+    </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel>
             <WrapPanel>
@@ -24,7 +30,7 @@
 
                 <StackPanel>
                     <Label>Customer</Label>
-                    <TextBox Name="txtCustomer" AcceptsReturn="true" IsReadOnly="true" MouseDoubleClick="txtCustomer_DoubleClick" />
+                    <TextBox Name="txtCustomer" AcceptsReturn="true" IsReadOnly="true" />
                 </StackPanel>
 
                 <StackPanel>
@@ -40,7 +46,7 @@
 
             <StackPanel Margin="12">
                 <Label>Items</Label>
-                <DataGrid Name="dgItems" CellEditEnding="dgItems_CellEditEnding" CanUserAddRows="true" CanUserDeleteRows="true">
+                <DataGrid Name="dgItems" CellEditEnding="dgItems_CellEditEnding" CanUserAddRows="true" CanUserDeleteRows="true" AutoGenerateColumns="false">
                     <DataGrid.Columns>
                         <DataGridTextColumn x:Name="dgtcDescription" Width="500" Header="Description" Binding="{Binding Description}" />
                         <DataGridTextColumn x:Name="dgtcQuantity" Header="Quantity" Binding="{Binding Quantity}" />
@@ -59,16 +65,38 @@
 
             <StackPanel Margin="12 100 12 12">
                 <Label>Taxes</Label>
-                <DataGrid Name="dgTaxes" >
+                <DataGrid Name="dgTaxes" CellEditEnding="dgTaxes_CellEditEnding" AutoGenerateColumns="false">
                     <DataGrid.Columns>
+                        <DataGridComboBoxColumn x:Name="dgcbcTaxName" Header="Name" SelectedValueBinding="{Binding TaxID}" SelectedItemBinding="{Binding TaxName}" ItemsSource="{StaticResource AllTaxes}" DisplayMemberPath="TaxName" SelectedValuePath="TaxID" />
+                        <DataGridTextColumn x:Name="dgtcTaxRate" Header="Rate" IsReadOnly="true" Binding="{Binding TaxRate, Converter={converter:Percentage}}" />
                     </DataGrid.Columns>
                 </DataGrid>
+                <StackPanel Orientation="Horizontal">
+                    <Button Name="cmdAddTax" Content="Add" Click="cmdAddTax_Click" />
+                    <Button Name="cmdRemoveTax" Content="Remove" Click="cmdRemoveTax_Click" />
+                </StackPanel>
             </StackPanel>
 
             <StackPanel Margin="12 100 12 12">
                 <Label>Payments</Label>
-                <DataGrid Name="dgPayments">
+                <DataGrid Name="dgPayments" CellEditEnding="dgPayments_CellEditEnding" AutoGenerateColumns="false">
                     <DataGrid.Columns>
+                        <DataGridComboBoxColumn x:Name="dgcbcPaymentType" Header="Type" SelectedValueBinding="{Binding PaymentType, Converter={interface:PaymentTypesList+Converter}}" ItemsSource="{StaticResource AllPaymentTypes}" />
+                        <DataGridTextColumn x:Name="dgtcPaymentTypeCustom" Header="Custom Payment Type" Binding="{Binding PaymentTypeCustom}" />
+                        <DataGridTemplateColumn x:Name="dgtcReceivedDateTime" Header="Received">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding ReceivedDateTime}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                            <DataGridTemplateColumn.CellEditingTemplate>
+                                <DataTemplate>
+                                    <DatePicker SelectedDate="{Binding ReceivedDateTime}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellEditingTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn x:Name="dgtcAmount" Header="Amount" />
+                        <DataGridTextColumn x:Name="dgtcReferenceNumber" Header="Reference Number" />
                     </DataGrid.Columns>
                 </DataGrid>
             </StackPanel>

@@ -6,6 +6,7 @@
         <DataGrid.Columns>
             <DataGridTextColumn x:Name="dgtcInvoiceNumber" Header="#" Binding="{Binding InvoiceNumber}" />
             <DataGridTextColumn x:Name="dgtcInvoicee" Header="Invoicee" Binding="{Binding InvoiceeCustomer, Converter={converter:CustomerSummary}}" />
+            <DataGridTextColumn x:Name="dgtcState" Header="State" Binding="{Binding State}" />
             <DataGridTextColumn x:Name="dgtcTotal" Header="Total (incl. Tax)" Binding="{Binding ., Converter={converter:InvoiceTotal}}" />
             <DataGridTextColumn x:Name="dgtcOutstanding" Header="Outstanding" Binding="{Binding ., Converter={converter:InvoiceOutstanding}}" />
         </DataGrid.Columns>

@@ -2,9 +2,9 @@ namespace Invoices.Core;
 
 public class Tax
 {
-	public int? TaxID;
-	public string? TaxName;
-	public decimal TaxRate;
+	public int? TaxID { get; set; }
+	public string? TaxName { get; set; }
+	public decimal TaxRate { get; set; }
 
 	public static Tax Rehydrate(TaxDefinition taxDefinition)
 		=> Rehydrate(taxDefinition.TaxID, taxDefinition.TaxName, taxDefinition.TaxRate);

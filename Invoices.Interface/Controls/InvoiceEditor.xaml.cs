@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace Invoices.Interface.Controls;
 
+using System.ComponentModel;
+using System.Reflection;
 using Invoices.Core;
 
 public partial class InvoiceEditor : UserControl
@@ -12,11 +15,34 @@ public partial class InvoiceEditor : UserControl
 	public InvoiceEditor()
 	{
 		InitializeComponent();
+
+		PopulatePaymentTypes();
+	}
+
+	public void LoadTaxes(IEnumerable<TaxDefinition> taxes)
+	{
+		if (FindResource("AllTaxes") is TaxDefinitionList tlAllTaxes)
+			foreach (var tax in taxes)
+				tlAllTaxes.Add(tax);
+	}
+
+	void PopulatePaymentTypes()
+	{
+		if (FindResource("AllPaymentTypes") is PaymentTypesList tlPaymentTypes)
+		{
+			foreach (var paymentType in Enum.GetValues<PaymentType>())
+			{
+				if (paymentType == PaymentType.Unknown)
+					continue;
+
+				tlPaymentTypes.Add(paymentType);
+			}
+		}
 	}
 
 	Invoice? _invoice;
 
-	public Invoice? Invoice
+	public Invoice? 	Invoice
 	{
 		get => _invoice;
 		set
@@ -35,6 +61,8 @@ public partial class InvoiceEditor : UserControl
 					cboState.SelectedValue = null;
 					txtStateDescription.Text = "";
 					dgItems.ItemsSource = null;
+					dgTaxes.ItemsSource = null;
+					dgPayments.ItemsSource = null;
 
 					txtNotes.Text = "";
 					txtInternalNotes.Text = "";
@@ -47,6 +75,8 @@ public partial class InvoiceEditor : UserControl
 					cboState.SelectedValue = value.State;
 					txtStateDescription.Text = value.StateDescription;
 					dgItems.ItemsSource = value.Items;
+					dgTaxes.ItemsSource = value.Taxes;
+					dgPayments.ItemsSource = value.Payments;
 
 					txtNotes.Text = string.Join("\n", value.Notes);
 					txtInternalNotes.Text = string.Join("\n", value.InternalNotes);
@@ -65,15 +95,12 @@ public partial class InvoiceEditor : UserControl
 	void txtStateDescription_TextChanged(object? sender, TextChangedEventArgs e) => OnModified();
 	void txtNotes_TextChanged(object? sender, TextChangedEventArgs e) => OnModified();
 	void txtInternalNotes_TextChanged(object? sender, TextChangedEventArgs e) => OnModified();
+	void dgTaxes_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e) => OnModified();
+	void dgItems_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e) => OnModified();
+	void dgPayments_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e) => OnModified();
 
-	void txtCustomer_DoubleClick(object? sender, RoutedEventArgs e)
-	{
-	}
-
-	void dgItems_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
-	{
-
-	}
+	void cmdAddTax_Click(object? sender, EventArgs e) => MessageBox.Show("TODO");
+	void cmdRemoveTax_Click(object? sender, EventArgs e) => MessageBox.Show("TODO");
 
 	void InvoiceEditor_PreviewKeyDown(object? sender, KeyEventArgs e)
 	{

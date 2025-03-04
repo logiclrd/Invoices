@@ -150,7 +150,10 @@ MERGE INTO CustomerLines
 	{
 		var taxDefinitionByName = taxDefinitions.Values.ToDictionary(definition => definition.TaxName ?? "", StringComparer.InvariantCultureIgnoreCase);
 
-		DeleteInvoice(invoice.InvoiceNumber);
+		if (invoice.InvoiceID > 0)
+			ClearInvoice(invoice.InvoiceID);
+		else
+			DeleteInvoice(invoice.InvoiceNumber);
 
 		if ((invoice.InvoiceeCustomer != null) && (invoice.InvoiceeCustomer.CustomerID <= 0))
 			invoice.InvoiceeCustomer = SaveCustomer(invoice.InvoiceeCustomer);
@@ -173,6 +176,37 @@ MERGE INTO CustomerLines
 				cmd.Parameters.Add("@DueDate", SqlDbType.DateTime2).Value = invoice.DueDate.HasValue ? invoice.DueDate : DBNull.Value;
 
 				invoiceID = (int)cmd.ExecuteScalar();
+
+				cmd.Parameters.Clear();
+			}
+
+			void UpdateInvoices()
+			{
+				cmd.CommandText = @"
+UPDATE Invoices
+  SET InvoiceNumber = @InvoiceNumber,
+      InvoiceDate = @InvoiceDate,
+      InvoiceStateID = @InvoiceStateID,
+      InvoiceStateDescription = @InvoiceStateDescription,
+      InvoiceeCustomerID = @InvoiceeCustomerID,
+      PayableTo = @PayableTo,
+      ProjectName = @ProjectName,
+      DueDate = @DueDate
+  WHERE InvoiceID = @InvoiceID";
+
+				cmd.Parameters.Add("@InvoiceNumber", SqlDbType.NVarChar, 10).Value = invoice.InvoiceNumber;
+				cmd.Parameters.Add("@InvoiceDate", SqlDbType.DateTime2).Value = invoice.InvoiceDate;
+				cmd.Parameters.Add("@InvoiceStateID", SqlDbType.Int).Value = (int)invoice.State;
+				cmd.Parameters.Add("@InvoiceStateDescription", SqlDbType.NVarChar, 250).Value = invoice.StateDescription;
+				cmd.Parameters.Add("@InvoiceeCustomerID", SqlDbType.Int).Value = (invoice.InvoiceeCustomer != null) ? invoice.InvoiceeCustomer.CustomerID : DBNull.Value;
+				cmd.Parameters.Add("@PayableTo", SqlDbType.NVarChar, 250).Value = invoice.PayableTo;
+				cmd.Parameters.Add("@ProjectName", SqlDbType.NVarChar, 250).Value = invoice.ProjectName;
+				cmd.Parameters.Add("@DueDate", SqlDbType.DateTime2).Value = invoice.DueDate.HasValue ? invoice.DueDate : DBNull.Value;
+				cmd.Parameters.Add("@InvoiceID", SqlDbType.Int).Value = invoice.InvoiceID;
+
+				cmd.ExecuteNonQuery();
+
+				invoiceID = invoice.InvoiceID;
 
 				cmd.Parameters.Clear();
 			}
@@ -361,9 +395,14 @@ MERGE INTO CustomerLines
 				}
 			}
 
-			InsertInvoices();
+			if (invoice.InvoiceID <= 0)
+			{
+				InsertInvoices();
 
-			invoice.InvoiceID = invoiceID;
+				invoice.InvoiceID = invoiceID;
+			}
+			else
+				UpdateInvoices();
 
 			InsertInvoiceRelations();
 			InsertInvoiceItems();
@@ -786,6 +825,19 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 
 	public void DeleteInvoice(int invoiceID)
 	{
+		ClearInvoice(invoiceID);
+
+		using (var cmd = _connection.CreateCommand())
+		{
+			cmd.Parameters.Add("@InvoiceID", SqlDbType.Int).Value = invoiceID;
+
+			cmd.CommandText = "DELETE FROM Invoices WHERE InvoiceID = @InvoiceID";
+			cmd.ExecuteNonQuery();
+		}
+	}
+
+	public void ClearInvoice(int invoiceID)
+	{
 		using (var cmd = _connection.CreateCommand())
 		{
 			cmd.Parameters.Add("@InvoiceID", SqlDbType.Int).Value = invoiceID;
@@ -800,13 +852,23 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 			cmd.ExecuteNonQuery();
 			cmd.CommandText = "DELETE FROM InvoiceNotes WHERE InvoiceID = @InvoiceID";
 			cmd.ExecuteNonQuery();
-
-			cmd.CommandText = "DELETE FROM Invoices WHERE InvoiceID = @InvoiceID";
-			cmd.ExecuteNonQuery();
 		}
 	}
 
 	public void DeleteInvoice(string invoiceNumber)
+	{
+		ClearInvoice(invoiceNumber);
+
+		using (var cmd = _connection.CreateCommand())
+		{
+			cmd.Parameters.Add("@InvoiceNumber", SqlDbType.NVarChar).Value = invoiceNumber;
+
+			cmd.CommandText = "DELETE FROM Invoices WHERE InvoiceID IN (SELECT InvoiceID FROM Invoices WHERE InvoiceNumber = @InvoiceNumber)";
+			cmd.ExecuteNonQuery();
+		}
+	}
+
+	public void ClearInvoice(string invoiceNumber)
 	{
 		using (var cmd = _connection.CreateCommand())
 		{
@@ -821,9 +883,6 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 			cmd.CommandText = "DELETE FROM InvoicePayments WHERE InvoiceID IN (SELECT InvoiceID FROM Invoices WHERE InvoiceNumber = @InvoiceNumber)";
 			cmd.ExecuteNonQuery();
 			cmd.CommandText = "DELETE FROM InvoiceNotes WHERE InvoiceID IN (SELECT InvoiceID FROM Invoices WHERE InvoiceNumber = @InvoiceNumber)";
-			cmd.ExecuteNonQuery();
-
-			cmd.CommandText = "DELETE FROM Invoices WHERE InvoiceID IN (SELECT InvoiceID FROM Invoices WHERE InvoiceNumber = @InvoiceNumber)";
 			cmd.ExecuteNonQuery();
 		}
 	}

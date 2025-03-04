@@ -4,11 +4,11 @@ namespace Invoices.Core;
 
 public class Payment
 {
-	public PaymentType PaymentType;
-	public string? PaymentTypeCustom;
-	public DateTime? ReceivedDateTime;
-	public decimal Amount;
-	public string? ReferenceNumber;
+	public PaymentType PaymentType { get; set; }
+	public string? PaymentTypeCustom { get; set; }
+	public DateTime? ReceivedDateTime { get; set; }
+	public decimal Amount { get; set; }
+	public string? ReferenceNumber { get; set; }
 
 	public string GetShortTypeDescription()
 	{
