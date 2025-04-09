@@ -24,7 +24,7 @@ public class InvoiceOutstandingExtension : MarkupExtension, IValueConverter
 			foreach (var tax in invoice.Taxes)
 				taxFactor += tax.TaxRate;
 
-			return (invoice.Items.Sum(item => item.Quantity * item.UnitPrice) * taxFactor - invoice.Payments.Sum(payment => payment.Amount)).ToString("$#,##0.00");
+			return invoice.Items.Sum(item => item.Quantity * item.UnitPrice) * taxFactor - invoice.Payments.Sum(payment => payment.Amount);
 		}
 
 		return value?.ToString() ?? "";

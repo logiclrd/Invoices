@@ -18,7 +18,7 @@ public class InvoiceTotalExtension : MarkupExtension, IValueConverter
 	public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 	{
 		if (value is Invoice invoice)
-			return invoice.Items.Sum(item => item.Quantity * item.UnitPrice).ToString("$#,##0.00");
+			return invoice.Items.Sum(item => item.Quantity * item.UnitPrice);
 
 		return value?.ToString() ?? "";
 	}

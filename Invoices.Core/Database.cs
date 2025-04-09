@@ -740,13 +740,15 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 			DateTime invoiceDate = reader.GetDateTime(invoiceDate_ordinal);
 			InvoiceState state = (InvoiceState)reader.GetInt32(invoiceStateID_ordinal);
 			string stateDescription = reader.GetString(invoiceStateDescription_ordinal);
-			int invoiceeCustomerID = reader.GetInt32(invoiceeCustomerID_ordinal);
+			int? invoiceeCustomerID = reader.IsDBNull(invoiceeCustomerID_ordinal) ? null : reader.GetInt32(invoiceeCustomerID_ordinal);
 			string payableTo = reader.GetString(payableTo_ordinal);
 			string projectName = reader.GetString(projectName_ordinal);
 			DateTime? dueDate = reader.IsDBNull(dueDate_ordinal) ? default : reader.GetDateTime(dueDate_ordinal);
 
-			if (!customers.TryGetValue(invoiceeCustomerID, out var customer))
-				customer = new Customer() { CustomerID = invoiceeCustomerID };
+			Customer? customer = null;
+
+			if (invoiceeCustomerID.HasValue && !customers.TryGetValue(invoiceeCustomerID.Value, out customer))
+				customer = new Customer() { CustomerID = invoiceeCustomerID.Value };
 
 			yield return
 				new Invoice()

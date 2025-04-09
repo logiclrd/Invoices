@@ -99,9 +99,6 @@ public partial class InvoiceEditor : UserControl
 	void dgItems_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e) => OnModified();
 	void dgPayments_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e) => OnModified();
 
-	void cmdAddTax_Click(object? sender, EventArgs e) => MessageBox.Show("TODO");
-	void cmdRemoveTax_Click(object? sender, EventArgs e) => MessageBox.Show("TODO");
-
 	void InvoiceEditor_PreviewKeyDown(object? sender, KeyEventArgs e)
 	{
 		if (((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control) && (e.Key == Key.S))
@@ -121,7 +118,10 @@ public partial class InvoiceEditor : UserControl
 
 		_invoice.InvoiceNumber = txtInvoiceNumber.Text;
 		_invoice.InvoiceDate = dtpInvoiceDate.SelectedDate ?? DateTime.MinValue;
-		_invoice.State = (InvoiceState)cboState.SelectedValue;
+		if (cboState.SelectedValue != null)
+			_invoice.State = (InvoiceState)cboState.SelectedValue;
+		else
+			_invoice.State = InvoiceState.Ready;
 		_invoice.StateDescription = txtStateDescription.Text;
 
 		_invoice.Notes.Clear();

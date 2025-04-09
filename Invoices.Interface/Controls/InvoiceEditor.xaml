@@ -16,6 +16,9 @@
                     <Style TargetType="StackPanel">
                         <Setter Property="Margin" Value="12" />
                     </Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Margin" Value="12" />
+                    </Style>
                 </WrapPanel.Resources>
 
                 <StackPanel>
@@ -28,10 +31,19 @@
                     <DatePicker Name="dtpInvoiceDate" SelectedDateChanged="dtpInvoiceDate_SelectedDateChanged" />
                 </StackPanel>
 
-                <StackPanel>
-                    <Label>Customer</Label>
-                    <TextBox Name="txtCustomer" AcceptsReturn="true" IsReadOnly="true" />
-                </StackPanel>
+                <Grid VerticalAlignment="Top">
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <Label Grid.ColumnSpan="2">Customer</Label>
+                    <TextBox Grid.Row="1" Grid.Column="0" Name="txtCustomer" AcceptsReturn="true" IsReadOnly="true" />
+                    <Button Grid.Row="1" Grid.Column="1" Width="30">..</Button>
+                </Grid>
 
                 <StackPanel>
                     <Label>State</Label>
@@ -57,8 +69,8 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn x:Name="dgtcUnitPrice" Binding="{Binding UnitPrice}" />
-                        <DataGridTextColumn x:Name="dgtcSubtotal" IsReadOnly="true" Binding="{Binding LineTotal}" />
+                        <DataGridTextColumn x:Name="dgtcUnitPrice" Binding="{Binding UnitPrice, StringFormat=C2}" />
+                        <DataGridTextColumn x:Name="dgtcSubtotal" IsReadOnly="true" Binding="{Binding LineTotal, StringFormat=C2}" />
                     </DataGrid.Columns>
                 </DataGrid>
             </StackPanel>
@@ -71,10 +83,6 @@
                         <DataGridTextColumn x:Name="dgtcTaxRate" Header="Rate" IsReadOnly="true" Binding="{Binding TaxRate, Converter={converter:Percentage}}" />
                     </DataGrid.Columns>
                 </DataGrid>
-                <StackPanel Orientation="Horizontal">
-                    <Button Name="cmdAddTax" Content="Add" Click="cmdAddTax_Click" />
-                    <Button Name="cmdRemoveTax" Content="Remove" Click="cmdRemoveTax_Click" />
-                </StackPanel>
             </StackPanel>
 
             <StackPanel Margin="12 100 12 12">
@@ -95,8 +103,8 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellEditingTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn x:Name="dgtcAmount" Header="Amount" />
-                        <DataGridTextColumn x:Name="dgtcReferenceNumber" Header="Reference Number" />
+                        <DataGridTextColumn x:Name="dgtcAmount" Header="Amount" Binding="{Binding Amount, StringFormat=C2}" />
+                        <DataGridTextColumn x:Name="dgtcReferenceNumber" Header="Reference Number" Binding="{Binding ReferenceNumber}" />
                     </DataGrid.Columns>
                 </DataGrid>
             </StackPanel>
