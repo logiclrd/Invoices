@@ -1,0 +1,30 @@
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:core="clr-namespace:Invoices.Core;assembly=Invoices.Core"
+             xmlns:interface="clr-namespace:Invoices.Interface"
+             xmlns:converter="clr-namespace:Invoices.Interface.Converters"
+             x:Class="Invoices.Interface.Controls.CustomerEditor">
+    <StackPanel>
+        <TextBlock Visibility="{Binding CustomerID, Converter={converter:CustomerIDValidityToVisibility}}">
+            <Run>Customer ID: </Run>
+            <Run Text="{Binding CustomerID}" />
+        </TextBlock>
+        <TextBlock Visibility="{Binding CustomerID, Converter={converter:CustomerIDValidityToVisibility Invert=True}}">
+            <Run>Create New Customer</Run>
+        </TextBlock>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <Label>Name:</Label>
+                <TextBox Text="{Binding Name, Converter={converter:StringListToMultiLine}}" AcceptsReturn="True" Height="60" />
+                <Label Margin="0 16 0 0">Address:</Label>
+                <TextBox Text="{Binding Address, Converter={converter:StringListToMultiLine}}" AcceptsReturn="True" Height="60" />
+                <Label Margin="0 16 0 0">E-mail Addresses:</Label>
+                <TextBox Text="{Binding EmailAddresses, Converter={converter:StringListToMultiLine}}" AcceptsReturn="True" Height="60" />
+                <Label Margin="0 16 0 0">Phone Numbers:</Label>
+                <TextBox Text="{Binding PhoneNumbers, Converter={converter:StringListToMultiLine}}" AcceptsReturn="True" Height="60" />
+                <Label Margin="0 16 0 0">Notes:</Label>
+                <TextBox Text="{Binding Notes, Converter={converter:StringListToMultiLine}}" AcceptsReturn="True" Height="60" />
+            </StackPanel>
+        </ScrollViewer>
+    </StackPanel>
+</UserControl>

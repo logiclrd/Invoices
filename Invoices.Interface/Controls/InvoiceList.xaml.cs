@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -16,12 +17,18 @@ public partial class InvoiceList : UserControl
 		DataContext = this;
 	}
 
-	public static DependencyProperty InvoicesProperty = DependencyProperty.Register(nameof(Invoices), typeof(IEnumerable<Invoice>), typeof(InvoiceList));
+	public static DependencyProperty InvoicesProperty = DependencyProperty.Register(nameof(Invoices), typeof(IList<Invoice>), typeof(InvoiceList));
 
-	public IEnumerable<Invoice> Invoices
+	public IList<Invoice> Invoices
 	{
-		get => (IEnumerable<Invoice>)GetValue(InvoicesProperty);
-		set => SetValue(InvoicesProperty, value);
+		get => (IList<Invoice>)GetValue(InvoicesProperty);
+		set
+		{
+			if (!(value is BindingList<Invoice>))
+				value = new BindingList<Invoice>(value);
+
+			SetValue(InvoicesProperty, value);
+		}
 	}
 
 	public event EventHandler<Invoice>? InvoiceActivated;
@@ -41,8 +48,15 @@ public partial class InvoiceList : UserControl
 			};
 	}
 
-	public void ReloadInvoice(int invoiceID)
+	public void ReloadInvoice(Invoice invoice)
 	{
-		// TODO
+		var invoices = this.Invoices;
+
+		for (int i=0; i < invoices.Count; i++)
+			if (invoices[i].InvoiceID == invoice.InvoiceID)
+			{
+				invoices[i] = invoice;
+				break;
+			}
 	}
 }

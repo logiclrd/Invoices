@@ -6,12 +6,12 @@ namespace Invoices.Core;
 
 public class Customer
 {
-	public int CustomerID;
-	public List<string> Name = new List<string>();
-	public List<string> Address = new List<string>();
-	public List<string> EmailAddresses = new List<string>();
-	public List<string> PhoneNumbers = new List<string>();
-	public List<string> Notes = new List<string>();
+	public int CustomerID { get; set; }
+	public List<string> Name { get; set; } = new List<string>();
+	public List<string> Address { get; set; } = new List<string>();
+	public List<string> EmailAddresses { get; set; } = new List<string>();
+	public List<string> PhoneNumbers { get; set; } = new List<string>();
+	public List<string> Notes { get; set; } = new List<string>();
 
 	public string Summary
 	{

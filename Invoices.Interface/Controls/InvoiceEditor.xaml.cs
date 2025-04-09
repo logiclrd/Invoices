@@ -6,8 +6,6 @@ using System.Windows.Input;
 
 namespace Invoices.Interface.Controls;
 
-using System.ComponentModel;
-using System.Reflection;
 using Invoices.Core;
 
 public partial class InvoiceEditor : UserControl
@@ -41,6 +39,7 @@ public partial class InvoiceEditor : UserControl
 	}
 
 	Invoice? _invoice;
+	IList<Customer>? _customers;
 
 	public Invoice? 	Invoice
 	{
@@ -89,6 +88,12 @@ public partial class InvoiceEditor : UserControl
 		}
 	}
 
+	public IList<Customer>? Customers
+	{
+		get => _customers;
+		set => _customers = value;
+	}
+
 	void txtInvoiceNumber_TextChanged(object? sender, TextChangedEventArgs e) => OnModified();
 	void dtpInvoiceDate_SelectedDateChanged(object? sender, SelectionChangedEventArgs e) => OnModified();
 	void cboState_SelectionChanged(object? sender, SelectionChangedEventArgs e) => OnModified();
@@ -98,6 +103,32 @@ public partial class InvoiceEditor : UserControl
 	void dgTaxes_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e) => OnModified();
 	void dgItems_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e) => OnModified();
 	void dgPayments_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e) => OnModified();
+
+	void cmdChangeCustomer_Click(object? sender, RoutedEventArgs e)
+	{
+		if (_invoice is Invoice invoice)
+		{
+			var picker = new CustomerPicker();
+
+			picker.Customers = _customers;
+
+			if (invoice.InvoiceeCustomer != null)
+				picker.SelectedCustomer = invoice.InvoiceeCustomer;
+
+			picker.CreateOrUpdateSelectedCustomer += (_, _) => OnCreateUpdateCustomer(picker.SelectedCustomer ?? throw new Exception("Internal error: Received CreateOrUpdateSelectedCustomer event but SelectedCustomer is null."));
+
+			picker.Owner = Window.GetWindow(this);
+
+			bool customerSelected = picker.ShowDialog() ?? false;
+
+			if (customerSelected)
+			{
+				invoice.InvoiceeCustomer = picker.SelectedCustomer;
+				txtCustomer.Text = invoice.InvoiceeCustomer?.LongSummary ?? "";
+				OnModified();
+			}
+		}
+	}
 
 	void InvoiceEditor_PreviewKeyDown(object? sender, KeyEventArgs e)
 	{
@@ -139,6 +170,16 @@ public partial class InvoiceEditor : UserControl
 			Modified?.Invoke(this, EventArgs.Empty);
 	}
 
+	void OnCreateUpdateCustomer(Customer customer)
+	{
+		CreateOrUpdateCustomer?.Invoke(this, customer);
+
+		if (customer.CustomerID < 0)
+			throw new Exception("Internal error: Customer was not created when CreateCustomer event was fired by InvoiceEditor.");
+	}
+
 	public event EventHandler? Modified;
 	public event EventHandler? Save;
+
+	public event EventHandler<Customer>? CreateOrUpdateCustomer;
 }

@@ -73,16 +73,17 @@ public class Database : IDisposable
 		{
 			if (customer.CustomerID <= 0)
 			{
-				cmd.CommandText = "INSERT INTO Customers OUTPUT CustomerID DEFAULT VALUES";
+				cmd.CommandText = "INSERT INTO Customers OUTPUT INSERTED.CustomerID DEFAULT VALUES";
 
-				var reader = cmd.ExecuteReader();
+				using (var reader = cmd.ExecuteReader())
+				{
+					if (!reader.Read())
+						throw new Exception("Error: Expected result set inserting Customer");
 
-				if (!reader.Read())
-					throw new Exception("Error: Expected result set inserting Customer");
+					int CustomerID_ordinal = reader.GetOrdinal("CustomerID");
 
-				int CustomerID_ordinal = reader.GetOrdinal("CustomerID");
-
-				customer.CustomerID = reader.GetInt32(CustomerID_ordinal);
+					customer.CustomerID = reader.GetInt32(CustomerID_ordinal);
+				}
 			}
 
 			UpsertCustomerLines(customer.CustomerID, customer.Name, CustomerLineType.Name);
@@ -119,10 +120,10 @@ MERGE INTO CustomerLines
            @CustomerID,
            @LineTypeID,
            Source.Sequence,
-           Source.LineText
+           Source.Value
          )
   WHEN NOT MATCHED BY SOURCE
-    THEN DELETE";
+    THEN DELETE;";
 
 			var sourceTable = new DataTable();
 
@@ -135,7 +136,10 @@ MERGE INTO CustomerLines
 			cmd.Parameters.Add("@CustomerID", SqlDbType.Int).Value = customerID;
 			cmd.Parameters.Add("@LineTypeID", SqlDbType.Int).Value = (int)lineType;
 
-			cmd.Parameters.Add("@Source", SqlDbType.Structured).Value = sourceTable;
+			var sourceParameter = cmd.Parameters.Add("@Source", SqlDbType.Structured);
+
+			sourceParameter.TypeName = "dbo.StringList";
+			sourceParameter.Value = sourceTable;
 
 			cmd.ExecuteNonQuery();
 		}

@@ -35,6 +35,8 @@ public partial class MainWindow : Window
 
 		ieInvoice.LoadTaxes(_allTaxes);
 
+		ieInvoice.Customers = _database.LoadCustomers().Values.ToList();
+
 		ieInvoice.Invoice = invoice;
 
 		var ithHeader = new InvoiceTabHeader();
@@ -55,9 +57,14 @@ public partial class MainWindow : Window
 				ithHeader.IsModified = true;
 			};
 
-		ieInvoice.Save +=
-			(_, _) =>
+		ieInvoice.CreateOrUpdateCustomer +=
+			(_, customer) =>
 			{
+				_database.SaveCustomer(customer);
+			};
+
+		void SaveInvoice()
+		{
 				try
 				{
 					_database.SaveInvoice(invoice);
@@ -69,8 +76,11 @@ public partial class MainWindow : Window
 				}
 
 				ithHeader.IsModified = false;
-				ilInvoices.ReloadInvoice(invoice.InvoiceID);
-			};
+				ilInvoices.ReloadInvoice(invoice);
+		}
+
+		ieInvoice.Save += (_, _) => SaveInvoice();
+		ithHeader.Save += (_, _) => SaveInvoice();
 
 		ithHeader.Close +=
 			(_, _) =>

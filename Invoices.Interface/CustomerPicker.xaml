@@ -1,0 +1,41 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:Invoices.Interface.Controls"
+        x:Class="Invoices.Interface.CustomerPicker"
+        PreviewTextInput="Window_PreviewTextInput"
+        WindowStartupLocation="CenterOwner">
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <DockPanel Name="dpPickCustomer" Grid.Row="0">
+            <Grid DockPanel.Dock="Top">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <Label Grid.Column="0">Select Customer</Label>
+                <TextBox Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Width="100" Name="txtCustomerFilter" TextChanged="txtCustomerFilter_TextChanged" />
+            </Grid>
+            <ListView Name="lvCustomers" ItemsSource="{Binding Customers}" DisplayMemberPath="Summary" SelectionChanged="lvCustomers_SelectionChanged" MouseDoubleClick="lvCustomers_MouseDoubleClick" />
+        </DockPanel>
+        <DockPanel Name="dpAddEditCustomer" Grid.Row="0" Visibility="Collapsed">
+            <controls:CustomerEditor x:Name="ceEditor" Margin="20 0" />
+        </DockPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="1">
+            <StackPanel.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Width" Value="50" />
+                    <Setter Property="Margin" Value="6" />
+                </Style>
+            </StackPanel.Resources>
+            <Button Name="cmdAdd" Click="cmdAdd_Click">Add...</Button>
+            <Button Name="cmdEdit" Click="cmdEdit_Click">Edit...</Button>
+            <Button Name="cmdPick" Click="cmdPick_Click" Visibility="Collapsed">Pick...</Button>
+            <Button Name="cmdOK" Click="cmdOK_Click">OK</Button>
+            <Button Name="cmdCancel" Click="cmdCancel_Click">Cancel</Button>
+        </StackPanel>
+    </Grid>
+</Window>
