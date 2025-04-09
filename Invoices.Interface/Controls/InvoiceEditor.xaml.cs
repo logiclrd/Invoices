@@ -7,6 +7,7 @@ using System.Windows.Input;
 namespace Invoices.Interface.Controls;
 
 using Invoices.Core;
+using Invoices.Interface.Images;
 
 public partial class InvoiceEditor : UserControl
 {
@@ -182,4 +183,14 @@ public partial class InvoiceEditor : UserControl
 	public event EventHandler? Save;
 
 	public event EventHandler<Customer>? CreateOrUpdateCustomer;
+
+	void imgReceiptPrinter_MouseLeftButtonDown(object? sender, MouseButtonEventArgs e)
+	{
+		var printPreview = new PrintPreview();
+
+		printPreview.Owner = Window.GetWindow(this);
+		printPreview.LoadInvoice(_invoice);
+
+		printPreview.ShowDialog();
+	}
 }

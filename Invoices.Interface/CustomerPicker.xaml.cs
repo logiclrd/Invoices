@@ -9,6 +9,7 @@ using System.Windows.Input;
 namespace Invoices.Interface;
 
 using Invoices.Core;
+using Invoices.Interface.Controls;
 
 public partial class CustomerPicker : Window
 {
@@ -113,12 +114,27 @@ public partial class CustomerPicker : Window
 	void lvCustomers_SelectionChanged(object? sender, SelectionChangedEventArgs e)
 	{
 		_selectedCustomer = lvCustomers.SelectedItem as Customer;
+
+		cmdEdit.IsEnabled = (_selectedCustomer != null);
 	}
 
 	void lvCustomers_MouseDoubleClick(object? sender, MouseButtonEventArgs e)
 	{
 		if (e.ChangedButton == MouseButton.Left)
 			Accept();
+	}
+
+	void ceEditor_PreviewKeyDown(object? sender, KeyEventArgs e)
+	{
+		if ((e.Key == Key.Enter) && Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+		{
+			e.Handled = true;
+
+			// This ensures that anything the user has just typed gets pushed back to the DataContext.
+			cmdOK.Focus();
+
+			Accept();
+		}
 	}
 
 	bool _editing = false;

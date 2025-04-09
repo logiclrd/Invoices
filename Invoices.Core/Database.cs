@@ -122,7 +122,7 @@ MERGE INTO CustomerLines
            Source.Sequence,
            Source.Value
          )
-  WHEN NOT MATCHED BY SOURCE
+  WHEN NOT MATCHED BY SOURCE AND CustomerID = @CustomerID AND LineTypeID = @LineTypeID
     THEN DELETE;";
 
 			var sourceTable = new DataTable();

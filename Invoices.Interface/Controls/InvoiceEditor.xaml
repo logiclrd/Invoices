@@ -3,6 +3,7 @@
              xmlns:core="clr-namespace:Invoices.Core;assembly=Invoices.Core"
              xmlns:interface="clr-namespace:Invoices.Interface"
              xmlns:converter="clr-namespace:Invoices.Interface.Converters"
+             xmlns:image="clr-namespace:Invoices.Interface.Images"
              x:Class="Invoices.Interface.Controls.InvoiceEditor"
              PreviewKeyDown="InvoiceEditor_PreviewKeyDown">
     <UserControl.Resources>
@@ -11,50 +12,53 @@
     </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel>
-            <WrapPanel>
-                <WrapPanel.Resources>
-                    <Style TargetType="StackPanel">
-                        <Setter Property="Margin" Value="12" />
-                    </Style>
-                    <Style TargetType="Grid">
-                        <Setter Property="Margin" Value="12" />
-                    </Style>
-                </WrapPanel.Resources>
+            <DockPanel>
+                <image:ReceiptPrinter x:Name="imgReceiptPrinter" DockPanel.Dock="Right" Margin="8" MouseLeftButtonDown="imgReceiptPrinter_MouseLeftButtonDown" />
+                <WrapPanel>
+                    <WrapPanel.Resources>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Margin" Value="12" />
+                        </Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Margin" Value="12" />
+                        </Style>
+                    </WrapPanel.Resources>
 
-                <StackPanel>
-                    <Label>Invoice #</Label>
-                    <TextBox Name="txtInvoiceNumber" TextChanged="txtInvoiceNumber_TextChanged" />
-                </StackPanel>
+                    <StackPanel>
+                        <Label>Invoice #</Label>
+                        <TextBox Name="txtInvoiceNumber" TextChanged="txtInvoiceNumber_TextChanged" />
+                    </StackPanel>
 
-                <StackPanel>
-                    <Label>Date</Label>
-                    <DatePicker Name="dtpInvoiceDate" SelectedDateChanged="dtpInvoiceDate_SelectedDateChanged" />
-                </StackPanel>
+                    <StackPanel>
+                        <Label>Date</Label>
+                        <DatePicker Name="dtpInvoiceDate" SelectedDateChanged="dtpInvoiceDate_SelectedDateChanged" />
+                    </StackPanel>
 
-                <Grid VerticalAlignment="Top">
-                    <Grid.RowDefinitions>
-                        <RowDefinition />
-                        <RowDefinition />
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition />
-                        <ColumnDefinition />
-                    </Grid.ColumnDefinitions>
-                    <Label Grid.ColumnSpan="2">Customer</Label>
-                    <TextBox Grid.Row="1" Grid.Column="0" Name="txtCustomer" AcceptsReturn="true" IsReadOnly="true" />
-                    <Button Name="cmdChangeCustomer" Click="cmdChangeCustomer_Click" Grid.Row="1" Grid.Column="1" Width="30">..</Button>
-                </Grid>
+                    <Grid VerticalAlignment="Top">
+                        <Grid.RowDefinitions>
+                            <RowDefinition />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.ColumnSpan="2">Customer</Label>
+                        <TextBox Grid.Row="1" Grid.Column="0" Name="txtCustomer" AcceptsReturn="true" IsReadOnly="true" />
+                        <Button Name="cmdChangeCustomer" Click="cmdChangeCustomer_Click" Grid.Row="1" Grid.Column="1" Width="30">..</Button>
+                    </Grid>
 
-                <StackPanel>
-                    <Label>State</Label>
-                    <ComboBox Name="cboState" SelectionChanged="cboState_SelectionChanged">
-                        <x:Static Member="core:InvoiceState.Ready" />
-                        <x:Static Member="core:InvoiceState.Waiting" />
-                        <x:Static Member="core:InvoiceState.Finished" />
-                    </ComboBox>
-                    <TextBox Name="txtStateDescription" Width="400" TextChanged="txtStateDescription_TextChanged" />
-                </StackPanel>
-            </WrapPanel>
+                    <StackPanel>
+                        <Label>State</Label>
+                        <ComboBox Name="cboState" SelectionChanged="cboState_SelectionChanged">
+                            <x:Static Member="core:InvoiceState.Ready" />
+                            <x:Static Member="core:InvoiceState.Waiting" />
+                            <x:Static Member="core:InvoiceState.Finished" />
+                        </ComboBox>
+                        <TextBox Name="txtStateDescription" Width="400" TextChanged="txtStateDescription_TextChanged" />
+                    </StackPanel>
+                </WrapPanel>
+            </DockPanel>
 
             <StackPanel Margin="12">
                 <Label>Items</Label>

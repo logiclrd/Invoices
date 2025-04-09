@@ -16,12 +16,12 @@
             <StackPanel>
                 <Label>Name:</Label>
                 <TextBox Text="{Binding Name, Converter={converter:StringListToMultiLine}}" AcceptsReturn="True" Height="60" />
-                <Label Margin="0 16 0 0">Address:</Label>
-                <TextBox Text="{Binding Address, Converter={converter:StringListToMultiLine}}" AcceptsReturn="True" Height="60" />
                 <Label Margin="0 16 0 0">E-mail Addresses:</Label>
                 <TextBox Text="{Binding EmailAddresses, Converter={converter:StringListToMultiLine}}" AcceptsReturn="True" Height="60" />
                 <Label Margin="0 16 0 0">Phone Numbers:</Label>
                 <TextBox Text="{Binding PhoneNumbers, Converter={converter:StringListToMultiLine}}" AcceptsReturn="True" Height="60" />
+                <Label Margin="0 16 0 0">Address:</Label>
+                <TextBox Text="{Binding Address, Converter={converter:StringListToMultiLine}}" AcceptsReturn="True" Height="60" />
                 <Label Margin="0 16 0 0">Notes:</Label>
                 <TextBox Text="{Binding Notes, Converter={converter:StringListToMultiLine}}" AcceptsReturn="True" Height="60" />
             </StackPanel>

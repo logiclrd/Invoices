@@ -22,7 +22,7 @@
             <ListView Name="lvCustomers" ItemsSource="{Binding Customers}" DisplayMemberPath="Summary" SelectionChanged="lvCustomers_SelectionChanged" MouseDoubleClick="lvCustomers_MouseDoubleClick" />
         </DockPanel>
         <DockPanel Name="dpAddEditCustomer" Grid.Row="0" Visibility="Collapsed">
-            <controls:CustomerEditor x:Name="ceEditor" Margin="20 0" />
+            <controls:CustomerEditor x:Name="ceEditor" Margin="20 0" PreviewKeyDown="ceEditor_PreviewKeyDown" />
         </DockPanel>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="1">
             <StackPanel.Resources>
@@ -34,8 +34,8 @@
             <Button Name="cmdAdd" Click="cmdAdd_Click">Add...</Button>
             <Button Name="cmdEdit" Click="cmdEdit_Click">Edit...</Button>
             <Button Name="cmdPick" Click="cmdPick_Click" Visibility="Collapsed">Pick...</Button>
-            <Button Name="cmdOK" Click="cmdOK_Click">OK</Button>
-            <Button Name="cmdCancel" Click="cmdCancel_Click">Cancel</Button>
+            <Button Name="cmdOK" Click="cmdOK_Click" IsDefault="true">OK</Button>
+            <Button Name="cmdCancel" Click="cmdCancel_Click" IsCancel="true">Cancel</Button>
         </StackPanel>
     </Grid>
 </Window>
