@@ -32,6 +32,8 @@
                     <StackPanel>
                         <Label>Date</Label>
                         <DatePicker Name="dtpInvoiceDate" SelectedDateChanged="dtpInvoiceDate_SelectedDateChanged" />
+                        <CheckBox Name="chkSetDueDate" Margin="0 12 0 0" Checked="chkSetDueDate_Checked" Unchecked="chkSetDueDate_Unchecked">Has due date</CheckBox>
+                        <DatePicker Name="dtpDueDate" SelectedDateChanged="dtpDueDate_SelectedDateChanged" IsEnabled="{Binding ElementName=chkSetDueDate, Path=IsChecked}" />
                     </StackPanel>
 
                     <Grid VerticalAlignment="Top">

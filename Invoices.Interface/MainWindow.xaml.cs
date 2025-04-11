@@ -80,7 +80,7 @@ public partial class MainWindow : Window
 		}
 
 		ieInvoice.Save += (_, _) => SaveInvoice();
-		ithHeader.Save += (_, _) => SaveInvoice();
+		ithHeader.Save += (_, _) => ieInvoice.SaveInvoice();
 
 		ithHeader.Close +=
 			(_, _) =>

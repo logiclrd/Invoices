@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -7,7 +8,7 @@ using System.Windows.Input;
 namespace Invoices.Interface.Controls;
 
 using Invoices.Core;
-using Invoices.Interface.Images;
+using Invoices.Interface.Utility;
 
 public partial class InvoiceEditor : UserControl
 {
@@ -16,6 +17,8 @@ public partial class InvoiceEditor : UserControl
 		InitializeComponent();
 
 		PopulatePaymentTypes();
+
+		dtpInvoiceDate.SelectedDate = dtpDueDate.SelectedDate = DateTime.Today;
 	}
 
 	public void LoadTaxes(IEnumerable<TaxDefinition> taxes)
@@ -42,7 +45,7 @@ public partial class InvoiceEditor : UserControl
 	Invoice? _invoice;
 	IList<Customer>? _customers;
 
-	public Invoice? 	Invoice
+	public Invoice? Invoice
 	{
 		get => _invoice;
 		set
@@ -71,11 +74,13 @@ public partial class InvoiceEditor : UserControl
 				{
 					txtInvoiceNumber.Text = value.InvoiceNumber;
 					dtpInvoiceDate.SelectedDate = value.InvoiceDate;
+					chkSetDueDate.IsChecked = value.DueDate.HasValue;
+					dtpDueDate.SelectedDate = value.DueDate ?? DateTime.Today;
 					txtCustomer.Text = value.InvoiceeCustomer?.LongSummary ?? "";
 					cboState.SelectedValue = value.State;
 					txtStateDescription.Text = value.StateDescription;
 					dgItems.ItemsSource = value.Items;
-					dgTaxes.ItemsSource = value.Taxes;
+					dgTaxes.ItemsSource = new BindingList<Tax>(value.Taxes);
 					dgPayments.ItemsSource = value.Payments;
 
 					txtNotes.Text = string.Join("\n", value.Notes);
@@ -97,13 +102,21 @@ public partial class InvoiceEditor : UserControl
 
 	void txtInvoiceNumber_TextChanged(object? sender, TextChangedEventArgs e) => OnModified();
 	void dtpInvoiceDate_SelectedDateChanged(object? sender, SelectionChangedEventArgs e) => OnModified();
+	void chkSetDueDate_Checked(object? sender, RoutedEventArgs e) => OnModified();
+	void chkSetDueDate_Unchecked(object? sender, RoutedEventArgs e) => OnModified();
+	void dtpDueDate_SelectedDateChanged(object? sender, SelectionChangedEventArgs e) => OnModified();
 	void cboState_SelectionChanged(object? sender, SelectionChangedEventArgs e) => OnModified();
 	void txtStateDescription_TextChanged(object? sender, TextChangedEventArgs e) => OnModified();
 	void txtNotes_TextChanged(object? sender, TextChangedEventArgs e) => OnModified();
 	void txtInternalNotes_TextChanged(object? sender, TextChangedEventArgs e) => OnModified();
-	void dgTaxes_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e) => OnModified();
 	void dgItems_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e) => OnModified();
 	void dgPayments_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e) => OnModified();
+
+	void dgTaxes_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
+	{
+		AnnealTaxes(e);
+		OnModified();
+	}
 
 	void cmdChangeCustomer_Click(object? sender, RoutedEventArgs e)
 	{
@@ -131,36 +144,72 @@ public partial class InvoiceEditor : UserControl
 		}
 	}
 
+	void AnnealTaxes(DataGridCellEditEndingEventArgs e)
+	{
+		if (FindResource("AllTaxes") is TaxDefinitionList tlAllTaxes)
+		{
+			if ((e.EditAction == DataGridEditAction.Commit)
+			 && (e.Column == dgcbcTaxName))
+			{
+				var taxSelector = (ComboBox)e.EditingElement;
+
+				int selectedTaxID = (int)taxSelector.SelectedValue;
+
+				BindingList<Tax> gridSource = (BindingList<Tax>)dgTaxes.ItemsSource;
+
+				for (int i=0; i < tlAllTaxes.Count; i++)
+					if (tlAllTaxes[i].TaxID == selectedTaxID)
+					{
+						gridSource[e.Row.GetIndex()] = Tax.Rehydrate(tlAllTaxes[i]);
+						break;
+					}
+			}
+		}
+	}
+
 	void InvoiceEditor_PreviewKeyDown(object? sender, KeyEventArgs e)
 	{
 		if (((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control) && (e.Key == Key.S))
 		{
 			e.Handled = true;
 
-			TransferChangesToModel();
-
-			Save?.Invoke(this, EventArgs.Empty);
+			SaveInvoice();
 		}
 	}
 
-	void TransferChangesToModel()
+	public void SaveInvoice()
 	{
-		if (_invoice == null)
+		TransferChangesToModel();
+
+		Save?.Invoke(this, EventArgs.Empty);
+	}
+
+	void TransferChangesToModel() => TransferChangesToModel(_invoice);
+
+	void TransferChangesToModel(Invoice? model)
+	{
+		if (model == null)
 			return;
 
-		_invoice.InvoiceNumber = txtInvoiceNumber.Text;
-		_invoice.InvoiceDate = dtpInvoiceDate.SelectedDate ?? DateTime.MinValue;
-		if (cboState.SelectedValue != null)
-			_invoice.State = (InvoiceState)cboState.SelectedValue;
+		model.InvoiceNumber = txtInvoiceNumber.Text;
+		model.InvoiceDate = dtpInvoiceDate.SelectedDate ?? DateTime.Today;
+
+		if (chkSetDueDate.IsChecked ?? false)
+			model.DueDate = dtpDueDate.SelectedDate ?? DateTime.Today;
 		else
-			_invoice.State = InvoiceState.Ready;
-		_invoice.StateDescription = txtStateDescription.Text;
+			model.DueDate = null;
 
-		_invoice.Notes.Clear();
-		_invoice.Notes.AddRange(txtNotes.Text.Split('\n'));
+		if (cboState.SelectedValue != null)
+			model.State = (InvoiceState)cboState.SelectedValue;
+		else
+			model.State = InvoiceState.Ready;
+		model.StateDescription = txtStateDescription.Text;
 
-		_invoice.InternalNotes.Clear();
-		_invoice.InternalNotes.AddRange(txtInternalNotes.Text.Split('\n'));
+		model.Notes.Clear();
+		model.Notes.AddRange(txtNotes.Text.Split('\n'));
+
+		model.InternalNotes.Clear();
+		model.InternalNotes.AddRange(txtInternalNotes.Text.Split('\n'));
 	}
 
 	bool _loading;
@@ -186,11 +235,18 @@ public partial class InvoiceEditor : UserControl
 
 	void imgReceiptPrinter_MouseLeftButtonDown(object? sender, MouseButtonEventArgs e)
 	{
-		var printPreview = new PrintPreview();
+		if (_invoice != null)
+		{
+			var invoice = ObjectCloner.Clone(_invoice);
 
-		printPreview.Owner = Window.GetWindow(this);
-		printPreview.LoadInvoice(_invoice);
+			TransferChangesToModel(invoice);
 
-		printPreview.ShowDialog();
+			var printPreview = new PrintPreview();
+
+			printPreview.Owner = Window.GetWindow(this);
+			printPreview.LoadInvoice(invoice);
+
+			printPreview.ShowDialog();
+		}
 	}
 }
