@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Media;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace Invoices.Interface.Controls;
 
@@ -86,6 +88,8 @@ public partial class InvoiceEditor : UserControl
 					txtNotes.Text = string.Join("\n", value.Notes);
 					txtInternalNotes.Text = string.Join("\n", value.InternalNotes);
 				}
+
+				_modified = false;
 			}
 			finally
 			{
@@ -167,13 +171,95 @@ public partial class InvoiceEditor : UserControl
 		}
 	}
 
+	(DataGridRow Row, DataGridCell Cell)? FindGridCellRootElements(object eventSource)
+	{
+		var trace = eventSource as DependencyObject;
+
+		while (trace != null)
+		{
+			if (trace is DataGridCell cell)
+			{
+				while (trace != null)
+				{
+					if (trace is DataGridRow row)
+						return (row, cell);
+
+					trace = VisualTreeHelper.GetParent(trace);
+				}
+			}
+
+			trace = VisualTreeHelper.GetParent(trace);
+		}
+
+		return null;
+	}
+
+	void dgPayments_CellPreviewMouseDown(object? sender, MouseButtonEventArgs e)
+	{
+		if (FindGridCellRootElements(e.Source) is (DataGridRow row, DataGridCell cell))
+		{
+			if (cell.Column == dgtcReferenceNumber)
+			{
+				if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) && (e.ChangedButton == MouseButton.Left))
+				{
+					if (!(row.Item is Payment payment))
+					{
+						SystemSounds.Asterisk.Play();
+						return;
+					}
+
+					switch (payment.PaymentType)
+					{
+						case PaymentType.PayPal:
+						{
+							string referenceNumber = payment.ReferenceNumber?.Trim() ?? "";
+
+							if (string.IsNullOrEmpty(referenceNumber))
+							{
+								SystemSounds.Asterisk.Play();
+								break;
+							}
+
+							string paypalTransactionUri = $"https://www.paypal.com/myaccount/activities/details/{referenceNumber}";
+
+							ActivateUri?.Invoke(this, new Uri(paypalTransactionUri));
+
+							break;
+						}
+
+						default:
+							SystemSounds.Asterisk.Play();
+							break;
+					}
+				}
+			}
+		}
+	}
+
 	void InvoiceEditor_PreviewKeyDown(object? sender, KeyEventArgs e)
 	{
-		if (((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control) && (e.Key == Key.S))
+		if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) && (e.Key == Key.S))
 		{
 			e.Handled = true;
 
 			SaveInvoice();
+		}
+
+		if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) && ((e.Key == Key.W) || (e.Key == Key.F4)))
+		{
+			e.Handled = true;
+
+			if (_modified)
+			{
+				var result = MessageBox.Show("Save changes?", "Modified", MessageBoxButton.YesNoCancel);
+
+				if (result == MessageBoxResult.Yes)
+					SaveInvoice();
+				if (result == MessageBoxResult.Cancel)
+					return;
+			}
+
+			OnClose();
 		}
 	}
 
@@ -182,6 +268,8 @@ public partial class InvoiceEditor : UserControl
 		TransferChangesToModel();
 
 		Save?.Invoke(this, EventArgs.Empty);
+
+		_modified = false;
 	}
 
 	void TransferChangesToModel() => TransferChangesToModel(_invoice);
@@ -213,11 +301,15 @@ public partial class InvoiceEditor : UserControl
 	}
 
 	bool _loading;
+	bool _modified;
 
 	void OnModified()
 	{
 		if (!_loading)
+		{
+			_modified = true;
 			Modified?.Invoke(this, EventArgs.Empty);
+		}
 	}
 
 	void OnCreateUpdateCustomer(Customer customer)
@@ -228,10 +320,17 @@ public partial class InvoiceEditor : UserControl
 			throw new Exception("Internal error: Customer was not created when CreateCustomer event was fired by InvoiceEditor.");
 	}
 
+	void OnClose()
+	{
+		Close?.Invoke(this, EventArgs.Empty);
+	}
+
 	public event EventHandler? Modified;
 	public event EventHandler? Save;
+	public event EventHandler? Close;
 
 	public event EventHandler<Customer>? CreateOrUpdateCustomer;
+	public event EventHandler<Uri>? ActivateUri;
 
 	void imgReceiptPrinter_MouseLeftButtonDown(object? sender, MouseButtonEventArgs e)
 	{

@@ -340,7 +340,7 @@ UPDATE Invoices
 
 			void InsertInvoicePayments()
 			{
-				cmd.CommandText = "INSERT INTO InvoicePayments (InvoiceID, Sequence, PaymentTypeID, PaymentTypeCustom, ReceivedDateTime, Amount, ReferenceNumber) VALUES (@InvoiceID, @Sequence, @PaymentTypeID, @PaymentTypeCustom, @ReceivedDateTime, @Amount, @ReferenceNumber)";
+				cmd.CommandText = "INSERT INTO InvoicePayments (InvoiceID, Sequence, PaymentTypeID, PaymentTypeCustom, ReceivedDateTime, Amount, ReferenceNumber, PaymentProcessingFee) VALUES (@InvoiceID, @Sequence, @PaymentTypeID, @PaymentTypeCustom, @ReceivedDateTime, @Amount, @ReferenceNumber, @PaymentProcessingFee)";
 
 				cmd.Parameters.Add("@InvoiceID", SqlDbType.Int).Value = invoiceID;
 
@@ -350,6 +350,7 @@ UPDATE Invoices
 				var receivedDateTimeParam = cmd.Parameters.Add("@ReceivedDateTime", SqlDbType.DateTime2);
 				var amountParam = cmd.Parameters.Add("@Amount", SqlDbType.Decimal);
 				var referenceNumberParam = cmd.Parameters.Add("@ReferenceNumber", SqlDbType.NVarChar);
+				var paymentProcessingFeeParam = cmd.Parameters.Add("@PaymentProcessingFee", SqlDbType.Decimal);
 
 				for (int i=0; i < invoice.Payments.Count; i++)
 				{
@@ -361,6 +362,7 @@ UPDATE Invoices
 					receivedDateTimeParam.Value = payment.ReceivedDateTime;
 					amountParam.Value = payment.Amount;
 					referenceNumberParam.Value = payment.ReferenceNumber ?? (object)DBNull.Value;
+					paymentProcessingFeeParam.Value = payment.PaymentProcessingFee;
 
 					cmd.ExecuteNonQuery();
 				}
@@ -677,7 +679,7 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 		}
 	}
 
-	IEnumerable<(int InvoiceID, int Sequence, PaymentType PaymentType, string? PaymentTypeCustom, DateTime? ReceivedDateTime, decimal Amount, string? referenceNumber)> ReadInvoicePayments(SqlDataReader reader)
+	IEnumerable<(int InvoiceID, int Sequence, PaymentType PaymentType, string? PaymentTypeCustom, DateTime? ReceivedDateTime, decimal Amount, string? referenceNumber, decimal paymentProcessingFee)> ReadInvoicePayments(SqlDataReader reader)
 	{
 		int invoiceID_ordinal = reader.GetOrdinal("InvoiceID");
 		int sequence_ordinal = reader.GetOrdinal("Sequence");
@@ -686,6 +688,7 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 		int receivedDateTime_ordinal = reader.GetOrdinal("ReceivedDateTime");
 		int amount_ordinal = reader.GetOrdinal("Amount");
 		int referenceNumber_ordinal = reader.GetOrdinal("ReferenceNumber");
+		int paymentProcessingFee_ordinal = reader.GetOrdinal("PaymentProcessingFee");
 
 		while (reader.Read())
 		{
@@ -698,8 +701,9 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 			DateTime? receivedDateTime = reader.IsDBNull(receivedDateTime_ordinal) ? default : reader.GetDateTime(receivedDateTime_ordinal);
 			decimal amount = reader.GetDecimal(amount_ordinal);
 			string? referenceNumber = reader.IsDBNull(referenceNumber_ordinal) ? default : reader.GetString(referenceNumber_ordinal);
-			
-			yield return (invoiceID, sequence, (PaymentType)paymentTypeID, paymentTypeCustom, receivedDateTime, amount, referenceNumber);
+			decimal paymentProcessingFee = reader.GetDecimal(paymentProcessingFee_ordinal);
+
+			yield return (invoiceID, sequence, (PaymentType)paymentTypeID, paymentTypeCustom, receivedDateTime, amount, referenceNumber, paymentProcessingFee);
 		}
 	}
 

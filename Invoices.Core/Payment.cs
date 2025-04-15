@@ -9,6 +9,7 @@ public class Payment
 	public DateTime? ReceivedDateTime { get; set; }
 	public decimal Amount { get; set; }
 	public string? ReferenceNumber { get; set; }
+	public decimal PaymentProcessingFee { get; set; }
 
 	public string GetShortTypeDescription()
 	{
@@ -33,10 +34,10 @@ public class Payment
 		}
 	}
 
-	public static Payment Rehydrate((int InvoiceID, int Sequence, PaymentType PaymentType, string? PaymentTypeCustom, DateTime? ReceivedDateTime, decimal Amount, string? ReferenceNumber) data)
-		=> Rehydrate(data.PaymentType, data.PaymentTypeCustom, data.ReceivedDateTime, data.Amount, data.ReferenceNumber);
+	public static Payment Rehydrate((int InvoiceID, int Sequence, PaymentType PaymentType, string? PaymentTypeCustom, DateTime? ReceivedDateTime, decimal Amount, string? ReferenceNumber, decimal PaymentProcessingFee) data)
+		=> Rehydrate(data.PaymentType, data.PaymentTypeCustom, data.ReceivedDateTime, data.Amount, data.ReferenceNumber, data.PaymentProcessingFee);
 
-	public static Payment Rehydrate(PaymentType paymentType, string? paymentTypeCustom, DateTime? receivedDateTime, decimal amount, string? referenceNumber)
+	public static Payment Rehydrate(PaymentType paymentType, string? paymentTypeCustom, DateTime? receivedDateTime, decimal amount, string? referenceNumber, decimal paymentProcessingFee)
 	{
 		return
 			new Payment()
@@ -46,6 +47,7 @@ public class Payment
 				ReceivedDateTime = receivedDateTime,
 				Amount = amount,
 				ReferenceNumber = referenceNumber,
+				PaymentProcessingFee = paymentProcessingFee,
 			};
 	}
 }

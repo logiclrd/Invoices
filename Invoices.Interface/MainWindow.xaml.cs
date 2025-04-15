@@ -1,5 +1,7 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -63,6 +65,12 @@ public partial class MainWindow : Window
 				_database.SaveCustomer(customer);
 			};
 
+		ieInvoice.ActivateUri +=
+			(_, uri) =>
+			{
+				OpenUrl(uri.ToString());
+			};
+
 		void SaveInvoice()
 		{
 				try
@@ -79,14 +87,44 @@ public partial class MainWindow : Window
 				ilInvoices.ReloadInvoice(invoice);
 		}
 
+		void CloseTab()
+		{
+			tcRoot.Items.Remove(tiTab);
+			tcRoot.SelectedIndex = 0;
+		}
+
 		ieInvoice.Save += (_, _) => SaveInvoice();
 		ithHeader.Save += (_, _) => ieInvoice.SaveInvoice();
 
-		ithHeader.Close +=
+		ieInvoice.Close +=
 			(_, _) =>
 			{
-				tcRoot.Items.Remove(tiTab);
-				tcRoot.SelectedIndex = 0;
+				CloseTab();
 			};
+
+		ithHeader.Close += (_, _) => CloseTab();
+	}
+
+	private void OpenUrl(string url)
+	{
+		try
+		{
+			Process.Start(url);
+		}
+		catch
+		{
+			// hack because of this: https://github.com/dotnet/corefx/issues/10361
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			{
+				url = url.Replace("&", "^&");
+				Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+			}
+			else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+				Process.Start("xdg-open", url);
+			else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+				Process.Start("open", url);
+			else
+				throw;
+		}
 	}
 }

@@ -94,6 +94,11 @@
             <StackPanel Margin="12 100 12 12">
                 <Label>Payments</Label>
                 <DataGrid Name="dgPayments" CellEditEnding="dgPayments_CellEditEnding" AutoGenerateColumns="false">
+                    <DataGrid.Resources>
+                        <Style TargetType="DataGridCell">
+                            <EventSetter Event="PreviewMouseDown" Handler="dgPayments_CellPreviewMouseDown" />
+                        </Style>
+                    </DataGrid.Resources>
                     <DataGrid.Columns>
                         <DataGridComboBoxColumn x:Name="dgcbcPaymentType" Header="Type" SelectedValueBinding="{Binding PaymentType, Converter={interface:PaymentTypesList+Converter}}" ItemsSource="{StaticResource AllPaymentTypes}" />
                         <DataGridTextColumn x:Name="dgtcPaymentTypeCustom" Header="Custom Payment Type" Binding="{Binding PaymentTypeCustom}" />
@@ -111,6 +116,7 @@
                         </DataGridTemplateColumn>
                         <DataGridTextColumn x:Name="dgtcAmount" Header="Amount" Binding="{Binding Amount, StringFormat=C2}" />
                         <DataGridTextColumn x:Name="dgtcReferenceNumber" Header="Reference Number" Binding="{Binding ReferenceNumber}" />
+                        <DataGridTextColumn x:Name="dgtcPaymentProcessingFee" Header="Payment Processing Fee" Binding="{Binding PaymentProcessingFee, StringFormat=C2}" />
                     </DataGrid.Columns>
                 </DataGrid>
             </StackPanel>

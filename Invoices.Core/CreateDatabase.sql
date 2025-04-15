@@ -156,14 +156,15 @@ VALUES
 
 CREATE TABLE InvoicePayments
 (
-    RowID             INT            NOT NULL IDENTITY(1, 1),
-    InvoiceID         INT            NOT NULL,
-    Sequence          INT            NOT NULL,
-    PaymentTypeID     INT            NOT NULL,
-    PaymentTypeCustom NVARCHAR(100)      NULL,
-    ReceivedDateTime  DATETIME2          NULL,
-    Amount            DECIMAL(18, 2) NOT NULL,
-    ReferenceNumber   NVARCHAR(100)      NULL,
+    RowID                INT            NOT NULL IDENTITY(1, 1),
+    InvoiceID            INT            NOT NULL,
+    Sequence             INT            NOT NULL,
+    PaymentTypeID        INT            NOT NULL,
+    PaymentTypeCustom    NVARCHAR(100)      NULL,
+    ReceivedDateTime     DATETIME2          NULL,
+    Amount               DECIMAL(18, 2) NOT NULL,
+    ReferenceNumber      NVARCHAR(100)      NULL,
+    PaymentProcessingFee DECIMAL(18, 2) NOT NULL,
 
     CONSTRAINT PK_InvoicePayments PRIMARY KEY (RowID),
     CONSTRAINT FK_InvoicePayments_InvoiceID FOREIGN KEY (InvoiceID) REFERENCES Invoices(InvoiceID),
