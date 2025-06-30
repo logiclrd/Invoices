@@ -169,7 +169,8 @@ public class InvoiceRenderer
 		plan.Items.Add(new RenderPlanItem(ItemType.Text, invoiceNumber + new string(' ', spaces) + invoiceDate));
 		plan.Items.Add(new RenderPlanItem(ItemType.Text, ""));
 
-		if (invoice.DueDate is DateTime dueDate)
+		if ((invoice.DueDate is DateTime dueDate)
+		 && (dueDate != DateTime.MinValue))
 		{
 			plan.Items.Add(new RenderPlanItem(ItemType.Text, "Due: " + dueDate.ToString("yyyy-MM-dd")));
 			plan.Items.Add(new RenderPlanItem(ItemType.Text, ""));
@@ -192,6 +193,16 @@ public class InvoiceRenderer
 			ColumnWidth_Subtotal++;
 		}
 
+		int maxQuantityLength = invoice.Items.Max(item => item.Quantity.ToString("#,##0.##").Length);
+
+		if (maxQuantityLength + 2 > ColumnWidth_Qty)
+		{
+			int delta = maxQuantityLength + 2 - ColumnWidth_Qty;
+
+			ColumnWidth_Description -= delta;
+			ColumnWidth_Qty += delta;
+		}
+
 		plan.Items.Add(new RenderPlanItem(ItemType.BoldText,
 			"Description".PadRight(ColumnWidth_Description) +
 			"Qty".PadRight(ColumnWidth_Qty) +
@@ -207,7 +218,7 @@ public class InvoiceRenderer
 			var subtotal = item.UnitPrice * item.Quantity;
 
 			var descriptionFirstLine = descriptionLines.First();
-			var qtyText = item.Quantity + " @";
+			var qtyText = item.Quantity.ToString("#,##0.##") + " @";
 			var priceText = item.UnitPrice.ToString("$#,##0.00");
 			var subtotalText = subtotal.ToString("$#,##0.00");
 
@@ -274,7 +285,14 @@ public class InvoiceRenderer
 
 				if (payment.ReceivedDateTime.HasValue)
 				{
-					string receivedDateTimeText = payment.ReceivedDateTime.Value.ToString("yyyy-MM-dd HH:mm");
+					string formatString;
+
+					if (payment.ReceivedDateTime.Value.TimeOfDay != TimeSpan.Zero)
+						formatString = "yyyy-MM-dd HH:mm";
+					else
+						formatString = "yyyy-MM-dd";
+
+					string receivedDateTimeText = payment.ReceivedDateTime.Value.ToString(formatString);
 
 					plan.Items.Add(new RenderPlanItem(ItemType.Text, summaryIndent + receivedDateTimeText));
 				}

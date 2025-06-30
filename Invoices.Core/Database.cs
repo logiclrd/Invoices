@@ -281,7 +281,7 @@ UPDATE Invoices
 
 				var sequenceParam = cmd.Parameters.Add("@Sequence", SqlDbType.Int);
 				var descriptionParam = cmd.Parameters.Add("@Description", SqlDbType.NVarChar);
-				var quantityParam = cmd.Parameters.Add("@Quantity", SqlDbType.Int);
+				var quantityParam = cmd.Parameters.Add("@Quantity", SqlDbType.Decimal);
 				var unitPriceParam = cmd.Parameters.Add("@UnitPrice", SqlDbType.Decimal);
 
 				for (int i=0; i < invoice.Items.Count; i++)
@@ -639,7 +639,7 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 		}
 	}
 
-	IEnumerable<(int InvoiceID, int Sequence, string Description, int Quantity, decimal UnitPrice)> ReadInvoiceItems(SqlDataReader reader)
+	IEnumerable<(int InvoiceID, int Sequence, string Description, decimal Quantity, decimal UnitPrice)> ReadInvoiceItems(SqlDataReader reader)
 	{
 		int invoiceID_ordinal = reader.GetOrdinal("InvoiceID");
 		int sequence_ordinal = reader.GetOrdinal("Sequence");
@@ -654,7 +654,7 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 			int invoiceID = reader.GetInt32(invoiceID_ordinal);
 			int sequence = reader.GetInt32(sequence_ordinal);
 			string description = reader.GetString(description_ordinal);
-			int quantity = reader.GetInt32(quantity_ordinal);
+			decimal quantity = reader.GetDecimal(quantity_ordinal);
 			decimal unitPrice = reader.GetDecimal(unitPrice_ordinal);
 
 			yield return (invoiceID, sequence, description, quantity, unitPrice);

@@ -6,7 +6,7 @@ namespace Invoices.Core;
 public class InvoiceItem : INotifyPropertyChanged
 {
 	string? _description;
-	int _quantity;
+	decimal _quantity;
 	decimal _unitPrice;
 
 	public string? Description
@@ -19,7 +19,7 @@ public class InvoiceItem : INotifyPropertyChanged
 		}
 	}
 
-	public int Quantity
+	public decimal Quantity
 	{
 		get => _quantity;
 		set
@@ -43,10 +43,10 @@ public class InvoiceItem : INotifyPropertyChanged
 
 	public decimal LineTotal => Quantity * UnitPrice;
 
-	public static InvoiceItem Rehydrate((int InvoiceID, int Sequence, string Description, int Quantity, decimal UnitPrice) data)
+	public static InvoiceItem Rehydrate((int InvoiceID, int Sequence, string Description, decimal Quantity, decimal UnitPrice) data)
 		=> Rehydrate(data.Description, data.Quantity, data.UnitPrice);
 
-	public static InvoiceItem Rehydrate(string description, int quantity, decimal unitPrice)
+	public static InvoiceItem Rehydrate(string description, decimal quantity, decimal unitPrice)
 	{
 		return
 			new InvoiceItem()

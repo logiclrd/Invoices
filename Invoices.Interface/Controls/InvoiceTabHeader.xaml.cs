@@ -15,8 +15,8 @@ public partial class InvoiceTabHeader : UserControl
 		DataContext = this;
 	}
 
-	public static DependencyProperty TitleProperty = DependencyProperty.Register(nameof(Title), typeof(string), typeof(InvoiceTabHeader));
-	public static DependencyProperty IsModifiedProperty = DependencyProperty.Register(nameof(IsModified), typeof(bool), typeof(InvoiceTabHeader));
+	public static readonly DependencyProperty TitleProperty = DependencyProperty.Register(nameof(Title), typeof(string), typeof(InvoiceTabHeader));
+	public static readonly DependencyProperty IsModifiedProperty = DependencyProperty.Register(nameof(IsModified), typeof(bool), typeof(InvoiceTabHeader));
 
 	public event EventHandler? Save;
 	public event EventHandler? Close;

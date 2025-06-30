@@ -100,12 +100,22 @@ CREATE TABLE InvoiceItems
     InvoiceID   INT            NOT NULL,
     Sequence    INT            NOT NULL,
     Description NVARCHAR(250)  NOT NULL,
-    Quantity    INT            NOT NULL,
+    Quantity    DECIMAL(8, 2)  NOT NULL,
     UnitPrice   DECIMAL(18, 2) NOT NULL,
 
     CONSTRAINT PK_InvoiceItems PRIMARY KEY (RowID),
     CONSTRAINT FK_InvoiceItems_InvoiceID FOREIGN KEY (InvoiceID) REFERENCES Invoices (InvoiceID),
     CONSTRAINT UQ_InvoiceItems_InvoiceIDItemNumber UNIQUE (InvoiceID, Sequence)
+)
+
+CREATE TABLE ItemTemplates
+(
+    ItemTemplateID INT            NOT NULL IDENTITY(1, 1),
+    Category       NVARCHAR(250)  NOT NULL,
+    Description    NVARCHAR(250)  NOT NULL,
+    UnitPrice      DECIMAL(18, 2) NOT NULL,
+
+    CONSTRAINT PK_ItemTemplates PRIMARY KEY (RowID)
 )
 
 CREATE TABLE Taxes

@@ -116,6 +116,24 @@ public partial class InvoiceEditor : UserControl
 	void dgItems_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e) => OnModified();
 	void dgPayments_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e) => OnModified();
 
+	void dtpInvoiceDate_PreviewKeyDown(object? sender, KeyEventArgs e)
+	{
+		if (e.Key == Key.Home)
+		{
+			e.Handled = true;
+			dtpInvoiceDate.SelectedDate = DateTime.Today;
+		}
+	}
+
+	void dtpDueDate_PreviewKeyDown(object? sender, KeyEventArgs e)
+	{
+		if (e.Key == Key.Home)
+		{
+			e.Handled = true;
+			dtpDueDate.SelectedDate = DateTime.Today;
+		}
+	}
+
 	void dgTaxes_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
 	{
 		AnnealTaxes(e);

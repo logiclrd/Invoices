@@ -21,6 +21,8 @@ public class Payment
 
 			case PaymentType.Cash: return "Cash";
 			case PaymentType.eTransfer: return "e-Transfer";
+			case PaymentType.WireTransfer: return "Wire";
+			case PaymentType.PayPal: return "PayPal";
 			case PaymentType.DebitCard: return "Debit";
 			case PaymentType.CreditCard: return "Credit";
 			case PaymentType.MasterCard: return "MasterCard";

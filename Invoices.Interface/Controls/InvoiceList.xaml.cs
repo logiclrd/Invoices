@@ -17,7 +17,7 @@ public partial class InvoiceList : UserControl
 		DataContext = this;
 	}
 
-	public static DependencyProperty InvoicesProperty = DependencyProperty.Register(nameof(Invoices), typeof(IList<Invoice>), typeof(InvoiceList));
+	public static readonly DependencyProperty InvoicesProperty = DependencyProperty.Register(nameof(Invoices), typeof(IList<Invoice>), typeof(InvoiceList));
 
 	public IList<Invoice> Invoices
 	{
