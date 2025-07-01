@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:core="clr-namespace:Invoices.Core;assembly=Invoices.Core"
              xmlns:interface="clr-namespace:Invoices.Interface"
+             xmlns:controls="clr-namespace:Invoices.Interface.Controls"
              xmlns:converter="clr-namespace:Invoices.Interface.Converters"
              xmlns:image="clr-namespace:Invoices.Interface.Images"
              x:Class="Invoices.Interface.Controls.InvoiceEditor"
@@ -64,7 +65,15 @@
 
             <StackPanel Margin="12">
                 <Label>Items</Label>
-                <DataGrid Name="dgItems" CellEditEnding="dgItems_CellEditEnding" CanUserAddRows="true" CanUserDeleteRows="true" AutoGenerateColumns="false">
+                <ToggleButton Name="tbTemplates" SizeChanged="tbTemplates_SizeChanged">
+                    <StackPanel>
+                        <TextBlock>Templates</TextBlock>
+                        <Popup Name="pTemplatePicker" IsOpen="{Binding ElementName=tbTemplates, Path=IsChecked}" AllowsTransparency="True" StaysOpen="false" Placement="Bottom" PlacementTarget="{Binding ElementName=tbTemplates}">
+                            <controls:ItemTemplatePicker Background="#C0FFFFFF" x:Name="itpTemplatePicker" ItemTemplateActivated="itpTemplatePicker_ItemTemplateActivated" LostFocus="itpTemplatePicker_LostFocus" />
+                        </Popup>
+                    </StackPanel>
+                </ToggleButton>
+                <DataGrid Name="dgItems" CellEditEnding="dgItems_CellEditEnding" CanUserAddRows="true" CanUserDeleteRows="true" AutoGenerateColumns="false" RowEditEnding="dgItems_RowEditEnding">
                     <DataGrid.Columns>
                         <DataGridTextColumn x:Name="dgtcDescription" Width="500" Header="Description" Binding="{Binding Description}" />
                         <DataGridTextColumn x:Name="dgtcQuantity" Header="Quantity" Binding="{Binding Quantity}" />

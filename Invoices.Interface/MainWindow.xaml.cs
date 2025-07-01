@@ -35,6 +35,7 @@ public partial class MainWindow : Window
 		ieInvoice.HorizontalAlignment = HorizontalAlignment.Stretch;
 		ieInvoice.VerticalAlignment = VerticalAlignment.Stretch;
 
+		ieInvoice.LoadItemTemplates(_database.LoadItemTemplates());
 		ieInvoice.LoadTaxes(_allTaxes);
 
 		ieInvoice.Customers = _database.LoadCustomers().Values.ToList();

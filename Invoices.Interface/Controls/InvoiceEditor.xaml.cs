@@ -30,6 +30,11 @@ public partial class InvoiceEditor : UserControl
 				tlAllTaxes.Add(tax);
 	}
 
+	public void LoadItemTemplates(IEnumerable<ItemTemplate> templates)
+	{
+		itpTemplatePicker.ItemTemplates = templates.ToList();
+	}
+
 	void PopulatePaymentTypes()
 	{
 		if (FindResource("AllPaymentTypes") is PaymentTypesList tlPaymentTypes)
@@ -74,6 +79,12 @@ public partial class InvoiceEditor : UserControl
 				}
 				else
 				{
+					var itemsBindingList = new BindingList<InvoiceItem>(value.Items);
+					var taxesBindingList = new BindingList<Tax>(value.Taxes);
+
+					itemsBindingList.ListChanged += (_, _) => OnModified();
+					taxesBindingList.ListChanged += (_, _) => OnModified();
+
 					txtInvoiceNumber.Text = value.InvoiceNumber;
 					dtpInvoiceDate.SelectedDate = value.InvoiceDate;
 					chkSetDueDate.IsChecked = value.DueDate.HasValue;
@@ -81,8 +92,8 @@ public partial class InvoiceEditor : UserControl
 					txtCustomer.Text = value.InvoiceeCustomer?.LongSummary ?? "";
 					cboState.SelectedValue = value.State;
 					txtStateDescription.Text = value.StateDescription;
-					dgItems.ItemsSource = value.Items;
-					dgTaxes.ItemsSource = new BindingList<Tax>(value.Taxes);
+					dgItems.ItemsSource = itemsBindingList;
+					dgTaxes.ItemsSource = taxesBindingList;
 					dgPayments.ItemsSource = value.Payments;
 
 					txtNotes.Text = string.Join("\n", value.Notes);
@@ -132,6 +143,32 @@ public partial class InvoiceEditor : UserControl
 			e.Handled = true;
 			dtpDueDate.SelectedDate = DateTime.Today;
 		}
+	}
+
+	void tbTemplates_SizeChanged(object? sender, SizeChangedEventArgs e)
+	{
+		pTemplatePicker.Width = e.NewSize.Width;
+	}
+
+	void itpTemplatePicker_ItemTemplateActivated(object? sender, ItemTemplate template)
+	{
+		var newItem = new InvoiceItem();
+
+		newItem.Description = template.Description;
+		newItem.Quantity = 1;
+		var items = (BindingList<InvoiceItem>)dgItems.ItemsSource;
+
+		newItem.UnitPrice = template.UnitPrice;
+
+		items.Add(newItem);
+
+		tbTemplates.IsChecked = false;
+	}
+
+	void itpTemplatePicker_LostFocus(object? sender, RoutedEventArgs e)
+	{
+		if (e.OriginalSource == itpTemplatePicker)
+			tbTemplates.IsChecked = false;
 	}
 
 	void dgTaxes_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)

@@ -115,7 +115,7 @@ CREATE TABLE ItemTemplates
     Description    NVARCHAR(250)  NOT NULL,
     UnitPrice      DECIMAL(18, 2) NOT NULL,
 
-    CONSTRAINT PK_ItemTemplates PRIMARY KEY (RowID)
+    CONSTRAINT PK_ItemTemplates PRIMARY KEY (ItemTemplateID)
 )
 
 CREATE TABLE Taxes

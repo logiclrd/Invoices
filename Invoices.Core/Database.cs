@@ -654,7 +654,7 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 			int invoiceID = reader.GetInt32(invoiceID_ordinal);
 			int sequence = reader.GetInt32(sequence_ordinal);
 			string description = reader.GetString(description_ordinal);
-			decimal quantity = reader.GetDecimal(quantity_ordinal);
+			decimal quantity = reader.GetSimplifiedDecimal(quantity_ordinal);
 			decimal unitPrice = reader.GetDecimal(unitPrice_ordinal);
 
 			yield return (invoiceID, sequence, description, quantity, unitPrice);
@@ -893,6 +893,88 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 			cmd.CommandText = "DELETE FROM InvoicePayments WHERE InvoiceID IN (SELECT InvoiceID FROM Invoices WHERE InvoiceNumber = @InvoiceNumber)";
 			cmd.ExecuteNonQuery();
 			cmd.CommandText = "DELETE FROM InvoiceNotes WHERE InvoiceID IN (SELECT InvoiceID FROM Invoices WHERE InvoiceNumber = @InvoiceNumber)";
+			cmd.ExecuteNonQuery();
+		}
+	}
+
+	public IEnumerable<ItemTemplate> LoadItemTemplates()
+	{
+		using (var cmd = _connection.CreateCommand())
+		{
+			cmd.CommandText = "SELECT * FROM ItemTemplates";
+
+			using (var reader = cmd.ExecuteReader())
+			{
+				int itemTemplateID_ordinal = reader.GetOrdinal("ItemTemplateID");
+				int category_ordinal = reader.GetOrdinal("Category");
+				int description_ordinal = reader.GetOrdinal("Description");
+				int unitPrice_ordinal = reader.GetOrdinal("UnitPrice");
+
+				while (reader.Read())
+				{
+					int itemTemplateID = reader.GetInt32(itemTemplateID_ordinal);
+					string category = reader.GetString(category_ordinal);
+					string description = reader.GetString(description_ordinal);
+					decimal unitPrice = reader.GetDecimal(unitPrice_ordinal);
+
+					yield return
+						new ItemTemplate()
+						{
+							ItemTemplateID = itemTemplateID,
+							Category = category,
+							Description = description,
+							UnitPrice = unitPrice,
+						};
+				}
+			}
+		}
+	}
+
+	public void SaveItemTemplate(ItemTemplate itemTemplate)
+	{
+		void InsertItemTemplate()
+		{
+			using (var cmd = _connection.CreateCommand())
+			{
+				cmd.CommandText = "INSERT INTO ItemTemplates (Category, Description, UnitPrice) OUTPUT INSERTED.ItemTemplateID VALUES (@Category, @Description, @UnitPrice)";
+
+				cmd.Parameters.Add("@Category", SqlDbType.NVarChar).Value = itemTemplate.Category;
+				cmd.Parameters.Add("@Description", SqlDbType.NVarChar).Value = itemTemplate.Description;
+				cmd.Parameters.Add("@UnitPrice", SqlDbType.NVarChar).Value = itemTemplate.UnitPrice;
+
+				itemTemplate.ItemTemplateID = (int)cmd.ExecuteScalar();
+			}
+		}
+
+		void UpdateItemTemplate()
+		{
+			using (var cmd = _connection.CreateCommand())
+			{
+				cmd.CommandText = "UPDATE ItemTemplates SET Category = @CategoryID, Description = @Description, UnitPrice = @UnitPrice WHERE ItemTemplateID = @ItemTemplateID";
+
+				cmd.Parameters.Add("@ItemTemplateID", SqlDbType.Int).Value = itemTemplate.ItemTemplateID;
+				cmd.Parameters.Add("@Category", SqlDbType.NVarChar).Value = itemTemplate.Category;
+				cmd.Parameters.Add("@Description", SqlDbType.NVarChar).Value = itemTemplate.Description;
+				cmd.Parameters.Add("@UnitPrice", SqlDbType.NVarChar).Value = itemTemplate.UnitPrice;
+
+				cmd.ExecuteNonQuery();
+			}
+		}
+
+		if (itemTemplate.ItemTemplateID <= 0)
+			InsertItemTemplate();
+		else
+			UpdateItemTemplate();
+	}
+
+	public void DeleteItemTemplate(int itemTemplateID)
+	{
+		using (var cmd = _connection.CreateCommand())
+		{
+			cmd.CommandText = "DELETE FROM ItemTemplates WHERE ItemTemplateID = @ItemTemplateID";
+
+			cmd.Parameters.Add("@ItemTemplateID", SqlDbType.Int).Value = itemTemplateID;
+
 			cmd.ExecuteNonQuery();
 		}
 	}
