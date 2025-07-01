@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Media;
 using System.Windows;
 using System.Windows.Controls;
@@ -126,6 +127,7 @@ public partial class InvoiceEditor : UserControl
 	void txtInternalNotes_TextChanged(object? sender, TextChangedEventArgs e) => OnModified();
 	void dgItems_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e) => OnModified();
 	void dgPayments_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e) => OnModified();
+	void dgItems_RowEditEnding(object? sender, DataGridRowEditEndingEventArgs e) => OnModified();
 
 	void dtpInvoiceDate_PreviewKeyDown(object? sender, KeyEventArgs e)
 	{
@@ -133,6 +135,7 @@ public partial class InvoiceEditor : UserControl
 		{
 			e.Handled = true;
 			dtpInvoiceDate.SelectedDate = DateTime.Today;
+			OnModified();
 		}
 	}
 
@@ -142,6 +145,7 @@ public partial class InvoiceEditor : UserControl
 		{
 			e.Handled = true;
 			dtpDueDate.SelectedDate = DateTime.Today;
+			OnModified();
 		}
 	}
 
@@ -291,6 +295,21 @@ public partial class InvoiceEditor : UserControl
 		}
 	}
 
+	public bool PromptSaveInvoice()
+	{
+		if (_modified)
+		{
+			var result = MessageBox.Show("Save changes?", "Modified", MessageBoxButton.YesNoCancel);
+
+			if (result == MessageBoxResult.Yes)
+				SaveInvoice();
+			if (result == MessageBoxResult.Cancel)
+				return false;
+		}
+
+		return true;
+	}
+
 	void InvoiceEditor_PreviewKeyDown(object? sender, KeyEventArgs e)
 	{
 		if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) && (e.Key == Key.S))
@@ -304,15 +323,8 @@ public partial class InvoiceEditor : UserControl
 		{
 			e.Handled = true;
 
-			if (_modified)
-			{
-				var result = MessageBox.Show("Save changes?", "Modified", MessageBoxButton.YesNoCancel);
-
-				if (result == MessageBoxResult.Yes)
-					SaveInvoice();
-				if (result == MessageBoxResult.Cancel)
-					return;
-			}
+			if (!PromptSaveInvoice())
+				return;
 
 			OnClose();
 		}
@@ -357,6 +369,8 @@ public partial class InvoiceEditor : UserControl
 
 	bool _loading;
 	bool _modified;
+
+	public bool IsModified => _modified;
 
 	void OnModified()
 	{

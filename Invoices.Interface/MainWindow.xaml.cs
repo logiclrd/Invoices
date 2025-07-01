@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -74,18 +75,18 @@ public partial class MainWindow : Window
 
 		void SaveInvoice()
 		{
-				try
-				{
-					_database.SaveInvoice(invoice);
-				}
-				catch (Exception e)
-				{
-					MessageBox.Show("Exception: " + e);
-					return;
-				}
+			try
+			{
+				_database.SaveInvoice(invoice);
+			}
+			catch (Exception e)
+			{
+				MessageBox.Show("Exception: " + e);
+				return;
+			}
 
-				ithHeader.IsModified = false;
-				ilInvoices.ReloadInvoice(invoice);
+			ithHeader.IsModified = false;
+			ilInvoices.ReloadInvoice(invoice);
 		}
 
 		void CloseTab()
@@ -126,6 +127,85 @@ public partial class MainWindow : Window
 				Process.Start("open", url);
 			else
 				throw;
+		}
+	}
+
+	protected override void OnClosing(CancelEventArgs e)
+	{
+		int modifiedItems = 0;
+		int firstModifiedItemIndex = -1;
+		InvoiceEditor? firstModifiedEditor = null;
+
+		for (int i = 0; i < tcRoot.Items.Count; i++)
+		{
+			if (tcRoot.Items[i] is TabItem tiTab)
+			{
+				if (tiTab.Header is InvoiceTabHeader ithHeader)
+				{
+					if (ithHeader.IsModified)
+					{
+						modifiedItems++;
+
+						if (firstModifiedItemIndex < 0)
+						{
+							firstModifiedItemIndex = i;
+							firstModifiedEditor = tiTab.Content as InvoiceEditor;
+						}
+					}
+				}
+			}
+		}
+
+		if (modifiedItems > 0)
+		{
+			if ((modifiedItems == 1) && (firstModifiedEditor != null))
+			{
+				tcRoot.SelectedIndex = firstModifiedItemIndex;
+
+				if (!firstModifiedEditor.PromptSaveInvoice())
+					e.Cancel = true;
+			}
+			else
+			{
+				var result = MessageBox.Show("There are " + modifiedItems + " modified invoices. Do you wish to save them all?", "Modified", MessageBoxButton.YesNoCancel);
+
+				if (result == MessageBoxResult.No)
+				{
+					result = MessageBox.Show("Really quit and discard all changes?", "Modified", MessageBoxButton.YesNo);
+
+					if (result == MessageBoxResult.No)
+						e.Cancel = true;
+				}
+				else if (result == MessageBoxResult.Cancel)
+					e.Cancel = true;
+				else
+				{
+					// Save everything
+					try
+					{
+						for (int i = 0; i < tcRoot.Items.Count; i++)
+						{
+							if (tcRoot.Items[i] is TabItem tiTab)
+							{
+								if (tiTab.Content is InvoiceEditor ieInvoice)
+								{
+									if (ieInvoice.IsModified)
+									{
+										tcRoot.SelectedIndex = i;
+										ieInvoice.SaveInvoice();
+									}
+								}
+							}
+						}
+					}
+					catch (Exception ex)
+					{
+						MessageBox.Show("An error occurred: " + ex, "Error During Save", MessageBoxButton.OK);
+
+						e.Cancel = true;
+					}
+				}
+			}
 		}
 	}
 }
