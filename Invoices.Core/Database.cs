@@ -356,6 +356,9 @@ UPDATE Invoices
 				{
 					var payment = invoice.Payments[i];
 
+					if (payment.ReceivedDateTime == null)
+						payment.ReceivedDateTime = DateTime.Now;
+
 					sequenceParam.Value = i;
 					paymentTypeIDParam.Value = (int)payment.PaymentType;
 					paymentTypeCustomParam.Value = payment.PaymentTypeCustom ?? (object)DBNull.Value;
@@ -524,6 +527,31 @@ UPDATE Invoices
 		}
 
 		return customers;
+	}
+
+	public string GetNextInvoiceNumber()
+	{
+		int lastNumber = -1;
+
+		using (var cmd = _connection.CreateCommand())
+		{
+			cmd.CommandText = "SELECT InvoiceNumber FROM Invoices";
+
+			using (var reader = cmd.ExecuteReader())
+			{
+				int InvoiceNumber_ordinal = reader.GetOrdinal("InvoiceNumber");
+
+				while (reader.Read())
+				{
+					string InvoiceNumber = reader.GetString(InvoiceNumber_ordinal);
+
+					if (int.TryParse(InvoiceNumber, out int invoiceNumber) && (invoiceNumber > lastNumber))
+						lastNumber = invoiceNumber;
+				}
+			}
+		}
+
+		return (lastNumber + 1).ToString();
 	}
 
 	public List<Invoice> LoadInvoices()

@@ -50,6 +50,12 @@ public partial class InvoiceEditor : UserControl
 		}
 	}
 
+	public void SetNewInvoiceNumber(string invoiceNumber)
+	{
+		txtInvoiceNumber.Text = invoiceNumber;
+		txtInvoiceNumber.Foreground = Brushes.Green;
+	}
+
 	Invoice? _invoice;
 	IList<Customer>? _customers;
 
@@ -116,7 +122,7 @@ public partial class InvoiceEditor : UserControl
 		set => _customers = value;
 	}
 
-	void txtInvoiceNumber_TextChanged(object? sender, TextChangedEventArgs e) => OnModified();
+	void txtInvoiceNumber_TextChanged(object? sender, TextChangedEventArgs e) { OnModified(); txtInvoiceNumber.Foreground = Brushes.Black; }
 	void dtpInvoiceDate_SelectedDateChanged(object? sender, SelectionChangedEventArgs e) => OnModified();
 	void chkSetDueDate_Checked(object? sender, RoutedEventArgs e) => OnModified();
 	void chkSetDueDate_Unchecked(object? sender, RoutedEventArgs e) => OnModified();
@@ -335,6 +341,8 @@ public partial class InvoiceEditor : UserControl
 		TransferChangesToModel();
 
 		Save?.Invoke(this, EventArgs.Empty);
+
+		txtInvoiceNumber.Foreground = Brushes.Black;
 
 		_modified = false;
 	}

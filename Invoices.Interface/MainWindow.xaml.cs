@@ -43,6 +43,9 @@ public partial class MainWindow : Window
 
 		ieInvoice.Invoice = invoice;
 
+		if (string.IsNullOrEmpty(invoice.InvoiceNumber))
+			ieInvoice.SetNewInvoiceNumber(_database.GetNextInvoiceNumber());
+
 		var ithHeader = new InvoiceTabHeader();
 
 		ithHeader.Title = "Invoice #" + invoice.InvoiceNumber;

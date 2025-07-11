@@ -1,6 +1,5 @@
 <UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:behaviours="clr-namespace:Invoices.Interface.Behaviours"
              xmlns:controls="clr-namespace:Invoices.Interface.Controls"
              xmlns:converters="clr-namespace:Invoices.Interface.Converters"
              xmlns:core="clr-namespace:Invoices.Core;assembly=Invoices.Core"
