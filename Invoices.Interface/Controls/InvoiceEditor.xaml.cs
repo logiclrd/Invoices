@@ -259,6 +259,25 @@ public partial class InvoiceEditor : UserControl
 		return null;
 	}
 
+	void dgtcBackCalculateTax_Click(object? sender, RoutedEventArgs e)
+	{
+		if (FindGridCellRootElements(e.Source) is (DataGridRow row, DataGridCell cell))
+		{
+			if (!(row.Item is InvoiceItem item) || (_invoice == null))
+			{
+				SystemSounds.Asterisk.Play();
+				return;
+			}
+
+			decimal totalTaxRate = 0.0M;
+
+			foreach (var tax in _invoice.Taxes)
+				totalTaxRate += tax.TaxRate;
+
+			item.UnitPrice /= (1.0M + totalTaxRate);
+		}
+	}
+
 	void dgPayments_CellPreviewMouseDown(object? sender, MouseButtonEventArgs e)
 	{
 		if (FindGridCellRootElements(e.Source) is (DataGridRow row, DataGridCell cell))

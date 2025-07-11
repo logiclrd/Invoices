@@ -85,6 +85,13 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
                         <DataGridTextColumn x:Name="dgtcUnitPrice" Binding="{Binding UnitPrice, StringFormat=C2}" />
+                        <DataGridTemplateColumn x:Name="dgtcBackCalculateTax">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Click="dgtcBackCalculateTax_Click" Content="Int.Tax" Visibility="{Binding ., Converter={converter:VisibleWhenNotNull}, FallbackValue=Collapsed}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                         <DataGridTextColumn x:Name="dgtcSubtotal" IsReadOnly="true" Binding="{Binding LineTotal, StringFormat=C2}" />
                     </DataGrid.Columns>
                 </DataGrid>
