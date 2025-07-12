@@ -2,9 +2,41 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:Invoices.Interface.Controls"
         x:Class="Invoices.Interface.MainWindow">
-    <TabControl Name="tcRoot">
-        <TabItem Header="List">
-            <controls:InvoiceList x:Name="ilInvoices" InvoiceActivated="ilInvoices_InvoiceActivated" />
-        </TabItem>
-    </TabControl>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TabControl Name="tcRoot">
+            <TabItem Header="List">
+                <controls:InvoiceList x:Name="ilInvoices" SelectionChanged="ilInvoices_SelectionChanged" InvoiceActivated="ilInvoices_InvoiceActivated" />
+            </TabItem>
+        </TabControl>
+        <StatusBar Name="sbStatus" Grid.Row="1">
+            <StatusBarItem>
+                <TextBlock Name="tbInvoicesSelected">
+                    <Run Name="rSelectedCount">0 invoices</Run> selected
+                </TextBlock>
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <TextBlock>
+                    Total <Run Name="rSelectedTotal">$0.00</Run>
+                </TextBlock>
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <TextBlock>
+                    <Run Name="rSelectedReceived">$0.00</Run> received
+                </TextBlock>
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <TextBlock>
+                    <Run Name="rSelectedOutstanding">$0.00</Run> outstanding
+                </TextBlock>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
 </Window>

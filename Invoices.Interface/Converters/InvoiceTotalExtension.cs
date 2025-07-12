@@ -7,6 +7,7 @@ using System.Windows.Markup;
 namespace Invoices.Interface.Converters;
 
 using Invoices.Core;
+using Invoices.Interface.Utility;
 
 public class InvoiceTotalExtension : MarkupExtension, IValueConverter
 {
@@ -14,11 +15,18 @@ public class InvoiceTotalExtension : MarkupExtension, IValueConverter
 	{
 		return this;
 	}
-	
+
 	public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 	{
 		if (value is Invoice invoice)
-			return invoice.Items.Sum(item => item.Quantity * item.UnitPrice);
+		{
+			var taxes = invoice.Taxes.Sum(tax => tax.TaxRate);
+
+			return invoice.Items.Sum(item => item.Quantity * item.UnitPrice * (taxes + 1.0M));
+		}
+
+		if (value.IsDataGridPlaceholder())
+			return "";
 
 		return value?.ToString() ?? "";
 	}

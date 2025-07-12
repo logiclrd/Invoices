@@ -29,6 +29,42 @@ public partial class MainWindow : Window
 
 	TaxDefinition[] _allTaxes;
 
+	void ilInvoices_SelectionChanged(object? sender, EventArgs e)
+	{
+		int count = 0;
+		decimal total = 0;
+		decimal received = 0;
+		decimal outstanding = 0;
+
+		foreach (var invoice in ilInvoices.EnumerateSelectedInvoices())
+		{
+			count++;
+
+			if (invoice.State == InvoiceState.Cancelled)
+				continue;
+
+			var taxes = invoice.Taxes.Sum(tax => tax.TaxRate);
+
+			decimal invoiceTotal = invoice.Items.Sum(item => item.Quantity * item.UnitPrice * (taxes + 1.0M)); ;
+			decimal invoiceReceived = invoice.Payments.Sum(payment => payment.Amount); ;
+
+			total += invoiceTotal;
+			received += invoiceReceived;
+
+			if (total > received)
+				outstanding += (invoiceTotal - invoiceReceived);
+		}
+
+		if (count == 1)
+			rSelectedCount.Text = "1 invoice";
+		else
+			rSelectedCount.Text = count + " invoices";
+
+		rSelectedTotal.Text = total.ToString("$#,##0.00");
+		rSelectedReceived.Text = received.ToString("$#,##0.00");
+		rSelectedOutstanding.Text = outstanding.ToString("$#,##0.00");
+	}
+
 	void ilInvoices_InvoiceActivated(object? sender, Invoice invoice)
 	{
 		var ieInvoice = new InvoiceEditor();

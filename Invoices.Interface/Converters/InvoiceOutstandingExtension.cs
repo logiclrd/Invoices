@@ -7,6 +7,7 @@ using System.Windows.Markup;
 namespace Invoices.Interface.Converters;
 
 using Invoices.Core;
+using Invoices.Interface.Utility;
 
 public class InvoiceOutstandingExtension : MarkupExtension, IValueConverter
 {
@@ -14,7 +15,7 @@ public class InvoiceOutstandingExtension : MarkupExtension, IValueConverter
 	{
 		return this;
 	}
-	
+
 	public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 	{
 		if (value is Invoice invoice)
@@ -26,6 +27,9 @@ public class InvoiceOutstandingExtension : MarkupExtension, IValueConverter
 
 			return invoice.Items.Sum(item => item.Quantity * item.UnitPrice) * taxFactor - invoice.Payments.Sum(payment => payment.Amount);
 		}
+
+		if (value.IsDataGridPlaceholder())
+			return "";
 
 		return value?.ToString() ?? "";
 	}
