@@ -148,6 +148,14 @@
 
             <StackPanel Margin="12 100 12 12">
                 <Label>Payments</Label>
+                <ToggleButton Name="tbQuickPayments" SizeChanged="tbQuickPayments_SizeChanged">
+                    <StackPanel>
+                        <TextBlock>Quick Payments – Pay 100% By Method</TextBlock>
+                        <Popup Name="pQuickPaymentPicker" IsOpen="{Binding ElementName=tbQuickPayments, Path=IsChecked}" AllowsTransparency="True" StaysOpen="false" Placement="Bottom" PlacementTarget="{Binding ElementName=tbQuickPayments}">
+                            <controls:QuickItemPicker Background="#C0FFFFFF" x:Name="qipQuickPaymentPicker" QuickItemActivated="qipQuickPaymentPicker_QuickItemActivated" LostFocus="qipQuickPaymentPicker_LostFocus" />
+                        </Popup>
+                    </StackPanel>
+                </ToggleButton>
                 <DataGrid Name="dgPayments" CellEditEnding="dgPayments_CellEditEnding" AutoGenerateColumns="false" RowHeaderWidth="6">
                     <DataGrid.Resources>
                         <Style TargetType="DataGridCell">

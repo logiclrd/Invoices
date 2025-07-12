@@ -10,7 +10,6 @@ using System.Windows.Media;
 
 namespace Invoices.Interface.Controls;
 
-using System.Windows.Media.Animation;
 using Invoices.Core;
 using Invoices.Interface.Utility;
 
@@ -49,13 +48,19 @@ public partial class InvoiceEditor : UserControl
 	{
 		if (FindResource("AllPaymentTypes") is PaymentTypesList tlPaymentTypes)
 		{
+			var quickPayments = new List<QuickItem>();
+
 			foreach (var paymentType in Enum.GetValues<PaymentType>())
 			{
 				if (paymentType == PaymentType.Unknown)
 					continue;
 
 				tlPaymentTypes.Add(paymentType);
+
+				quickPayments.Add(new QuickItem() { Label = paymentType.ToString(), Data = paymentType });
 			}
+
+			qipQuickPaymentPicker.Items = quickPayments;
 		}
 	}
 
@@ -101,6 +106,7 @@ public partial class InvoiceEditor : UserControl
 				{
 					var itemsBindingList = new BindingList<InvoiceItem>(value.Items);
 					var taxesBindingList = new BindingList<Tax>(value.Taxes);
+					var paymentsBindingList = new BindingList<Payment>(value.Payments);
 
 					itemsBindingList.ListChanged += (_, _) => { OnModified(); RecalculateItemTotal(); RecalculateInvoiceTotal(); };
 					taxesBindingList.ListChanged += (_, _) => { OnModified(); RecalculateInvoiceTotal(); };
@@ -117,7 +123,7 @@ public partial class InvoiceEditor : UserControl
 					txtStateDescription.Text = value.StateDescription;
 					dgItems.ItemsSource = itemsBindingList;
 					dgTaxes.ItemsSource = taxesBindingList;
-					dgPayments.ItemsSource = value.Payments;
+					dgPayments.ItemsSource = paymentsBindingList;
 
 					txtNotes.Text = string.Join("\n", value.Notes);
 					txtInternalNotes.Text = string.Join("\n", value.InternalNotes);
@@ -235,6 +241,38 @@ public partial class InvoiceEditor : UserControl
 		OnModified();
 	}
 
+	void tbQuickPayments_SizeChanged(object? sender, SizeChangedEventArgs e)
+	{
+		pQuickPaymentPicker.Width = e.NewSize.Width;
+	}
+
+	void qipQuickPaymentPicker_QuickItemActivated(object? sender, QuickItem item)
+	{
+		if (!(item.Data is PaymentType paymentType))
+			return;
+		if (_invoice == null)
+			return;
+
+		if (!(dgPayments.ItemsSource is BindingList<Payment> paymentsBindingList))
+			return;
+
+		var newPayment = new Payment();
+
+		newPayment.PaymentType = paymentType;
+		newPayment.ReceivedDateTime = DateTime.UtcNow;
+		newPayment.Amount = _lastCalculatedInvoiceTotal;
+
+		paymentsBindingList.Add(newPayment);
+
+		tbQuickPayments.IsChecked = false;
+	}
+
+	void qipQuickPaymentPicker_LostFocus(object? sender, RoutedEventArgs e)
+	{
+		if (e.OriginalSource == qipQuickPaymentPicker)
+			tbQuickPayments.IsChecked = false;
+	}
+
 	void cmdChangeCustomer_Click(object? sender, RoutedEventArgs e)
 	{
 		if (_invoice is Invoice invoice)
@@ -316,7 +354,11 @@ public partial class InvoiceEditor : UserControl
 
 		txtInvoiceTaxesTotal.Text = taxesTotal.ToString("$#,##0.00");
 		txtInvoiceTotal.Text = total.ToString("$#,##0.00");
+
+		_lastCalculatedInvoiceTotal = total;
 	}
+
+	decimal _lastCalculatedInvoiceTotal;
 
 	(DataGridRow Row, DataGridCell Cell)? FindGridCellRootElements(object eventSource)
 	{
