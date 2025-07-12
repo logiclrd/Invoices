@@ -12,4 +12,6 @@ public enum InvoiceState
 	Waiting,
 	[Description("Completed")]
 	Finished,
+	[Description("Cancelled")]
+	Cancelled,
 }

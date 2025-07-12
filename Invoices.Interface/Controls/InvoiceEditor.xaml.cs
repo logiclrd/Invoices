@@ -83,14 +83,16 @@ public partial class InvoiceEditor : UserControl
 
 					txtNotes.Text = "";
 					txtInternalNotes.Text = "";
+					txtItemTotal.Text = "";
+					txtInvoiceTotal.Text = "";
 				}
 				else
 				{
 					var itemsBindingList = new BindingList<InvoiceItem>(value.Items);
 					var taxesBindingList = new BindingList<Tax>(value.Taxes);
 
-					itemsBindingList.ListChanged += (_, _) => OnModified();
-					taxesBindingList.ListChanged += (_, _) => OnModified();
+					itemsBindingList.ListChanged += (_, _) => { OnModified(); RecalculateItemTotal(); RecalculateInvoiceTotal(); };
+					taxesBindingList.ListChanged += (_, _) => { OnModified(); RecalculateInvoiceTotal(); };
 
 					txtInvoiceNumber.Text = value.InvoiceNumber;
 					dtpInvoiceDate.SelectedDate = value.InvoiceDate;
@@ -105,6 +107,10 @@ public partial class InvoiceEditor : UserControl
 
 					txtNotes.Text = string.Join("\n", value.Notes);
 					txtInternalNotes.Text = string.Join("\n", value.InternalNotes);
+
+					SetTotalSpacerWidth();
+					RecalculateItemTotal();
+					RecalculateInvoiceTotal();
 				}
 
 				_modified = false;
@@ -236,6 +242,40 @@ public partial class InvoiceEditor : UserControl
 		}
 	}
 
+	void RecalculateItemTotal()
+	{
+		if (_invoice == null)
+			return;
+
+		decimal total = 0.0M;
+
+		foreach (var item in _invoice.Items)
+			total += item.Quantity * item.UnitPrice;
+
+		txtItemTotal.Text = total.ToString("$#,##0.00");
+
+		_lastCalculatedItemTotal = total;
+	}
+
+	decimal _lastCalculatedItemTotal;
+
+	void RecalculateInvoiceTotal()
+	{
+		if (_invoice == null)
+			return;
+
+		decimal taxes = 0.0M;
+
+		foreach (var tax in _invoice.Taxes)
+			taxes += tax.TaxRate;
+
+		decimal taxesTotal = _lastCalculatedItemTotal * taxes;
+		decimal total = _lastCalculatedItemTotal * (1.0M + taxes);
+
+		txtInvoiceTaxesTotal.Text = taxesTotal.ToString("$#,##0.00");
+		txtInvoiceTotal.Text = total.ToString("$#,##0.00");
+	}
+
 	(DataGridRow Row, DataGridCell Cell)? FindGridCellRootElements(object eventSource)
 	{
 		var trace = eventSource as DependencyObject;
@@ -257,6 +297,31 @@ public partial class InvoiceEditor : UserControl
 		}
 
 		return null;
+	}
+
+	void dgItems_Cell_SizeChanged(object? sender, SizeChangedEventArgs e)
+	{
+		SetTotalSpacerWidth();
+	}
+
+	void SetTotalSpacerWidth()
+	{
+		double width = dgItems.RowHeaderWidth;
+
+		foreach (var column in dgItems.Columns)
+		{
+			if (column == dgtcSubtotal)
+				break;
+
+			width += column.ActualWidth;
+		}
+
+		cItemTotalSpacer.Width = width - lblItemTotalHeader.ActualWidth;
+		cInvoiceTotalSpacer.Width = width - lblInvoiceTotalHeader.ActualWidth;
+
+		txtItemTotal.Width = dgtcSubtotal.ActualWidth;
+		txtInvoiceTaxesTotal.Width = dgtcSubtotal.ActualWidth;
+		txtInvoiceTotal.Width = dgtcSubtotal.ActualWidth;
 	}
 
 	void dgtcBackCalculateTax_Click(object? sender, RoutedEventArgs e)

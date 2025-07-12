@@ -73,7 +73,12 @@
                         </Popup>
                     </StackPanel>
                 </ToggleButton>
-                <DataGrid Name="dgItems" CellEditEnding="dgItems_CellEditEnding" CanUserAddRows="true" CanUserDeleteRows="true" AutoGenerateColumns="false" RowEditEnding="dgItems_RowEditEnding">
+                <DataGrid Name="dgItems" CellEditEnding="dgItems_CellEditEnding" CanUserAddRows="true" CanUserDeleteRows="true" AutoGenerateColumns="false" RowHeaderWidth="6" RowEditEnding="dgItems_RowEditEnding">
+                    <DataGrid.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <EventSetter Event="SizeChanged" Handler="dgItems_Cell_SizeChanged" />
+                        </Style>
+                    </DataGrid.CellStyle>
                     <DataGrid.Columns>
                         <DataGridTextColumn x:Name="dgtcDescription" Width="500" Header="Description" Binding="{Binding Description}" />
                         <DataGridTextColumn x:Name="dgtcQuantity" Header="Quantity" Binding="{Binding Quantity}" />
@@ -84,7 +89,13 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn x:Name="dgtcUnitPrice" Binding="{Binding UnitPrice, StringFormat=C2}" />
+                        <DataGridTextColumn x:Name="dgtcUnitPrice" Binding="{Binding UnitPrice, StringFormat=C2}" MinWidth="50">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Right" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
                         <DataGridTemplateColumn x:Name="dgtcBackCalculateTax">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
@@ -92,24 +103,43 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn x:Name="dgtcSubtotal" IsReadOnly="true" Binding="{Binding LineTotal, StringFormat=C2}" />
+                        <DataGridTextColumn x:Name="dgtcSubtotal" IsReadOnly="true" Binding="{Binding LineTotal, StringFormat=C2}" MinWidth="60">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Right" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
                     </DataGrid.Columns>
                 </DataGrid>
+                <StackPanel Orientation="Horizontal">
+                    <Control Name="cItemTotalSpacer" />
+                    <Label Name="lblItemTotalHeader">Subtotal:</Label>
+                    <TextBox Name="txtItemTotal" IsReadOnly="True" Width="50" TextAlignment="Right" />
+                </StackPanel>
             </StackPanel>
 
             <StackPanel Margin="12 100 12 12">
                 <Label>Taxes</Label>
-                <DataGrid Name="dgTaxes" CellEditEnding="dgTaxes_CellEditEnding" AutoGenerateColumns="false">
+                <DataGrid Name="dgTaxes" CellEditEnding="dgTaxes_CellEditEnding" AutoGenerateColumns="false" RowHeaderWidth="6">
                     <DataGrid.Columns>
                         <DataGridComboBoxColumn x:Name="dgcbcTaxName" Header="Name" SelectedValueBinding="{Binding TaxID}" SelectedItemBinding="{Binding TaxName}" ItemsSource="{StaticResource AllTaxes}" DisplayMemberPath="TaxName" SelectedValuePath="TaxID" />
                         <DataGridTextColumn x:Name="dgtcTaxRate" Header="Rate" IsReadOnly="true" Binding="{Binding TaxRate, Converter={converter:Percentage}}" />
                     </DataGrid.Columns>
                 </DataGrid>
+                <StackPanel Orientation="Horizontal">
+                    <Control Name="cInvoiceTotalSpacer" />
+                    <Label Name="lblInvoiceTotalHeader">Total:</Label>
+                    <StackPanel>
+                        <TextBox Name="txtInvoiceTaxesTotal" IsReadOnly="True" Width="50" TextAlignment="Right" />
+                        <TextBox Name="txtInvoiceTotal" IsReadOnly="True" Width="50" TextAlignment="Right" />
+                    </StackPanel>
+                </StackPanel>
             </StackPanel>
 
             <StackPanel Margin="12 100 12 12">
                 <Label>Payments</Label>
-                <DataGrid Name="dgPayments" CellEditEnding="dgPayments_CellEditEnding" AutoGenerateColumns="false">
+                <DataGrid Name="dgPayments" CellEditEnding="dgPayments_CellEditEnding" AutoGenerateColumns="false" RowHeaderWidth="6">
                     <DataGrid.Resources>
                         <Style TargetType="DataGridCell">
                             <EventSetter Event="PreviewMouseDown" Handler="dgPayments_CellPreviewMouseDown" />

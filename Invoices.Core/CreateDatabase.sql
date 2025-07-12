@@ -49,6 +49,7 @@ VALUES
 (1, 'Ready', 'Ready for me to do work on'),
 (2, 'Waiting', 'Waiting on something external'),
 (3, 'Finished', 'Completed')
+(4, 'Cancelled', 'Cancelled')
 
 CREATE TABLE Invoices
 (
