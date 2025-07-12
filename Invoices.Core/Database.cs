@@ -182,6 +182,8 @@ MERGE INTO CustomerLines
 				invoiceID = (int)cmd.ExecuteScalar();
 
 				cmd.Parameters.Clear();
+
+				invoice.Materialized = true;
 			}
 
 			void UpdateInvoices()
@@ -789,6 +791,8 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 			yield return
 				new Invoice()
 				{
+					Materialized = true,
+
 					InvoiceID = invoiceID,
 					InvoiceNumber = invoiceNumber,
 					InvoiceDate = invoiceDate,

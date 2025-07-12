@@ -32,4 +32,6 @@ public class Invoice
 	public List<int> PredecessorInvoiceIDs { get; set; } = new List<int>();
 	public List<int> SuccessorInvoiceIDs { get; set; } = new List<int>();
 	public List<int> RelatedInvoiceIDs { get; set; } = new List<int>();
+
+	public bool Materialized;
 }

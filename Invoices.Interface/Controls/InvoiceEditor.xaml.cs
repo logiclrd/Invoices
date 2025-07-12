@@ -94,6 +94,9 @@ public partial class InvoiceEditor : UserControl
 					itemsBindingList.ListChanged += (_, _) => { OnModified(); RecalculateItemTotal(); RecalculateInvoiceTotal(); };
 					taxesBindingList.ListChanged += (_, _) => { OnModified(); RecalculateInvoiceTotal(); };
 
+					if (value.InvoiceDate == default)
+						value.InvoiceDate = DateTime.Today;
+
 					txtInvoiceNumber.Text = value.InvoiceNumber;
 					dtpInvoiceDate.SelectedDate = value.InvoiceDate;
 					chkSetDueDate.IsChecked = value.DueDate.HasValue;
@@ -457,6 +460,10 @@ public partial class InvoiceEditor : UserControl
 
 		model.InternalNotes.Clear();
 		model.InternalNotes.AddRange(txtInternalNotes.Text.Split('\n'));
+
+		foreach (var payment in model.Payments)
+			if (payment.ReceivedDateTime == null)
+				payment.ReceivedDateTime = DateTime.Now;
 	}
 
 	bool _loading;

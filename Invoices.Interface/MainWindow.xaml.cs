@@ -96,6 +96,9 @@ public partial class MainWindow : Window
 		{
 			tcRoot.Items.Remove(tiTab);
 			tcRoot.SelectedIndex = 0;
+
+			if (!invoice.Materialized)
+				ilInvoices.Invoices.Remove(invoice);
 		}
 
 		ieInvoice.Save += (_, _) => SaveInvoice();
