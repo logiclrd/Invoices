@@ -57,6 +57,7 @@
                             <x:Static Member="core:InvoiceState.Ready" />
                             <x:Static Member="core:InvoiceState.Waiting" />
                             <x:Static Member="core:InvoiceState.Finished" />
+                            <x:Static Member="core:InvoiceState.Cancelled" />
                         </ComboBox>
                         <TextBox Name="txtStateDescription" Width="400" TextChanged="txtStateDescription_TextChanged" />
                     </StackPanel>
