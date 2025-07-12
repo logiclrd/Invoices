@@ -6,8 +6,6 @@ using System.Windows.Controls;
 
 namespace Invoices.Interface.Controls;
 
-using Invoices.Core;
-
 public partial class QuickItemPicker : UserControl
 {
 	public QuickItemPicker()

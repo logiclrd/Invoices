@@ -226,6 +226,8 @@ public partial class InvoiceEditor : UserControl
 
 		taxesBindingList.Add(newTax);
 
+		OnModified();
+
 		tbQuickTaxes.IsChecked = false;
 	}
 
@@ -263,6 +265,8 @@ public partial class InvoiceEditor : UserControl
 		newPayment.Amount = _lastCalculatedInvoiceTotal;
 
 		paymentsBindingList.Add(newPayment);
+
+		OnModified();
 
 		tbQuickPayments.IsChecked = false;
 	}
