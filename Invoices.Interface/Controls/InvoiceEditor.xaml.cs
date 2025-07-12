@@ -10,6 +10,7 @@ using System.Windows.Media;
 
 namespace Invoices.Interface.Controls;
 
+using System.Windows.Media.Animation;
 using Invoices.Core;
 using Invoices.Interface.Utility;
 
@@ -55,6 +56,8 @@ public partial class InvoiceEditor : UserControl
 		txtInvoiceNumber.Text = invoiceNumber;
 		txtInvoiceNumber.Foreground = Brushes.Green;
 	}
+
+	public event EventHandler? InvoiceNumberChanged;
 
 	Invoice? _invoice;
 	IList<Customer>? _customers;
@@ -428,6 +431,8 @@ public partial class InvoiceEditor : UserControl
 		TransferChangesToModel();
 
 		Save?.Invoke(this, EventArgs.Empty);
+
+		InvoiceNumberChanged?.Invoke(this, EventArgs.Empty);
 
 		txtInvoiceNumber.Foreground = Brushes.Black;
 

@@ -48,7 +48,14 @@ public partial class MainWindow : Window
 
 		var ithHeader = new InvoiceTabHeader();
 
-		ithHeader.Title = "Invoice #" + invoice.InvoiceNumber;
+		void UpdateTitle()
+		{
+			ithHeader.Title = "Invoice #" + invoice.InvoiceNumber;
+		}
+
+		UpdateTitle();
+
+		ieInvoice.InvoiceNumberChanged += (_, _) => UpdateTitle();
 
 		var tiTab = new TabItem();
 
