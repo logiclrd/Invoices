@@ -27,9 +27,17 @@ public partial class InvoiceEditor : UserControl
 
 	public void LoadTaxes(IEnumerable<TaxDefinition> taxes)
 	{
+		var quickTaxes = new List<QuickItem>();
+
 		if (FindResource("AllTaxes") is TaxDefinitionList tlAllTaxes)
 			foreach (var tax in taxes)
+			{
 				tlAllTaxes.Add(tax);
+
+				quickTaxes.Add(new QuickItem() { Label = tax.TaxName, Data = tax });
+			}
+
+		qipQuickTaxPicker.Items = quickTaxes;
 	}
 
 	public void LoadItemTemplates(IEnumerable<ItemTemplate> templates)
@@ -191,6 +199,34 @@ public partial class InvoiceEditor : UserControl
 	{
 		if (e.OriginalSource == itpTemplatePicker)
 			tbTemplates.IsChecked = false;
+	}
+
+	void tbQuickTaxes_SizeChanged(object? sender, SizeChangedEventArgs e)
+	{
+		pQuickTaxPicker.Width = e.NewSize.Width;
+	}
+
+	void qipQuickTaxPicker_QuickItemActivated(object? sender, QuickItem item)
+	{
+		if (!(item.Data is TaxDefinition taxDefinition))
+			return;
+		if (_invoice == null)
+			return;
+
+		if (!(dgTaxes.ItemsSource is BindingList<Tax> taxesBindingList))
+			return;
+
+		var newTax = Tax.Rehydrate(taxDefinition);
+
+		taxesBindingList.Add(newTax);
+
+		tbQuickTaxes.IsChecked = false;
+	}
+
+	void qipQuickTaxPicker_LostFocus(object? sender, RoutedEventArgs e)
+	{
+		if (e.OriginalSource == qipQuickTaxPicker)
+			tbQuickTaxes.IsChecked = false;
 	}
 
 	void dgTaxes_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)

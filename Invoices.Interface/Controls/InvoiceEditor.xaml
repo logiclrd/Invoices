@@ -122,6 +122,14 @@
 
             <StackPanel Margin="12 100 12 12">
                 <Label>Taxes</Label>
+                <ToggleButton Name="tbQuickTaxes" SizeChanged="tbQuickTaxes_SizeChanged">
+                    <StackPanel>
+                        <TextBlock>Taxes</TextBlock>
+                        <Popup Name="pQuickTaxPicker" IsOpen="{Binding ElementName=tbQuickTaxes, Path=IsChecked}" AllowsTransparency="True" StaysOpen="false" Placement="Bottom" PlacementTarget="{Binding ElementName=tbQuickTaxes}">
+                            <controls:QuickItemPicker Background="#C0FFFFFF" x:Name="qipQuickTaxPicker" QuickItemActivated="qipQuickTaxPicker_QuickItemActivated" LostFocus="qipQuickTaxPicker_LostFocus" />
+                        </Popup>
+                    </StackPanel>
+                </ToggleButton>
                 <DataGrid Name="dgTaxes" CellEditEnding="dgTaxes_CellEditEnding" AutoGenerateColumns="false" RowHeaderWidth="6">
                     <DataGrid.Columns>
                         <DataGridComboBoxColumn x:Name="dgcbcTaxName" Header="Name" SelectedValueBinding="{Binding TaxID}" SelectedItemBinding="{Binding TaxName}" ItemsSource="{StaticResource AllTaxes}" DisplayMemberPath="TaxName" SelectedValuePath="TaxID" />
