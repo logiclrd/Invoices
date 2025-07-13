@@ -1,15 +1,73 @@
 using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace Invoices.Core;
 
-public class Payment
+public class Payment : INotifyPropertyChanged
 {
-	public PaymentType PaymentType { get; set; }
-	public string? PaymentTypeCustom { get; set; }
-	public DateTime? ReceivedDateTime { get; set; }
-	public decimal Amount { get; set; }
-	public string? ReferenceNumber { get; set; }
-	public decimal PaymentProcessingFee { get; set; }
+	PaymentType _paymentType;
+	string? _paymentTypeCustom;
+	DateTime? _receivedDateTime;
+	decimal _amount;
+	string? _referenceNumber;
+	decimal _paymentProcessingFee;
+
+	public PaymentType PaymentType
+	{
+		get => _paymentType;
+		set { _paymentType = value; OnPropertyChanged(); }
+	}
+
+	public string? PaymentTypeCustom
+	{
+		get => _paymentTypeCustom;
+		set { _paymentTypeCustom = value; OnPropertyChanged(); }
+	}
+
+	public DateTime? ReceivedDateTime
+	{
+		get => _receivedDateTime;
+		set { _receivedDateTime = value; OnPropertyChanged(); OnPropertyChanged(nameof(ReceivedDate)); }
+	}
+
+	public DateTime? ReceivedDate
+	{
+		get => _receivedDateTime?.Date;
+		set
+		{
+			_receivedDateTime = CalculateUpdatedReceivedDateTimeFromReceivedDateChange(_receivedDateTime, value);
+			OnPropertyChanged(nameof(ReceivedDateTime));
+			OnPropertyChanged();
+		}
+	}
+
+	public static DateTime? CalculateUpdatedReceivedDateTimeFromReceivedDateChange(DateTime? oldValue, DateTime? newDate)
+	{
+		return new DateTime(DateOnly.FromDateTime(newDate ?? DateTime.Today), TimeOnly.FromDateTime(oldValue ?? default));
+	}
+
+	public decimal Amount
+	{
+		get => _amount;
+		set { _amount = value; OnPropertyChanged(); }
+	}
+
+	public string? ReferenceNumber
+	{
+		get => _referenceNumber;
+		set { _referenceNumber = value; OnPropertyChanged(); }
+	}
+
+	public decimal PaymentProcessingFee
+	{
+		get => _paymentProcessingFee;
+		set { _paymentProcessingFee = value; OnPropertyChanged(); }
+	}
+
+	public event PropertyChangedEventHandler? PropertyChanged;
+
+	void OnPropertyChanged([CallerMemberName] string? propertyName = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
 	public string GetShortTypeDescription()
 	{

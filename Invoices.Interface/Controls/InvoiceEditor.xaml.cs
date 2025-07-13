@@ -359,7 +359,7 @@ public partial class InvoiceEditor : UserControl
 		var newPayment = new Payment();
 
 		newPayment.PaymentType = paymentType;
-		newPayment.ReceivedDateTime = DateTime.UtcNow;
+		newPayment.ReceivedDateTime = DateTime.Now;
 		newPayment.Amount = _lastCalculatedInvoiceTotal;
 
 		paymentsBindingList.Add(newPayment);
@@ -373,6 +373,21 @@ public partial class InvoiceEditor : UserControl
 	{
 		if (e.OriginalSource == qipQuickPaymentPicker)
 			tbQuickPayments.IsChecked = false;
+	}
+
+	void dgtcReceivedDateTime_DatePicker_SelectedDateChanged(object? sender, SelectionChangedEventArgs e)
+	{
+		if ((sender is DatePicker datePicker)
+		 && (VisualTreeHelper.GetParent(datePicker) is DependencyObject editFrame))
+		{
+			for (int i = 0, l = VisualTreeHelper.GetChildrenCount(editFrame); i < l; i++)
+			{
+				if (VisualTreeHelper.GetChild(editFrame, i) is TextBox textBox)
+				{
+					textBox.GetBindingExpression(TextBox.TextProperty).UpdateTarget();
+				}
+			}
+		}
 	}
 
 	void dgPayments_RowEditEnding(object? sender, DataGridRowEditEndingEventArgs e)

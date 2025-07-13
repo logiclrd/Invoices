@@ -173,7 +173,10 @@
                             </DataGridTemplateColumn.CellTemplate>
                             <DataGridTemplateColumn.CellEditingTemplate>
                                 <DataTemplate>
-                                    <DatePicker SelectedDate="{Binding ReceivedDateTime}" />
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <DatePicker SelectedDate="{Binding ReceivedDate}" SelectedDateChanged="dgtcReceivedDateTime_DatePicker_SelectedDateChanged" />
+                                        <TextBox Text="{Binding ReceivedDateTime,StringFormat=yyyy-MM-dd HH:mm:ss}" />
+                                    </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellEditingTemplate>
                         </DataGridTemplateColumn>

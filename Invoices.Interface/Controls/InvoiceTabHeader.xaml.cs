@@ -37,7 +37,8 @@ public partial class InvoiceTabHeader : UserControl
 	{
 		if (e.ChangedButton == MouseButton.Middle)
 		{
-			Save?.Invoke(this, EventArgs.Empty);
+			if (IsModified)
+				Save?.Invoke(this, EventArgs.Empty);
 			Close?.Invoke(this, EventArgs.Empty);
 		}
 	}
