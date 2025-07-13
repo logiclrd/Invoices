@@ -19,4 +19,15 @@ public class Tax
 				TaxRate = taxRate,
 			};
 	}
+
+	public bool IsEmpty
+	{
+		get
+		{
+			return
+				((TaxID == null) || (TaxID == 0)) &&
+				string.IsNullOrWhiteSpace(TaxName) &&
+				(TaxRate == 0);
+		}
+	}
 }

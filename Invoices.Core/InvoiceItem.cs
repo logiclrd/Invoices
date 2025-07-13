@@ -60,4 +60,15 @@ public class InvoiceItem : INotifyPropertyChanged
 	public event PropertyChangedEventHandler? PropertyChanged;
 
 	void OnPropertyChanged([CallerMemberName] string? propertyName = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+	public bool IsEmpty
+	{
+		get
+		{
+			return
+				string.IsNullOrWhiteSpace(_description) &&
+				(_quantity == 0) &&
+				(_unitPrice == 0);
+		}
+	}
 }

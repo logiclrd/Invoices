@@ -74,7 +74,7 @@
                         </Popup>
                     </StackPanel>
                 </ToggleButton>
-                <DataGrid Name="dgItems" CellEditEnding="dgItems_CellEditEnding" CanUserAddRows="true" CanUserDeleteRows="true" AutoGenerateColumns="false" RowHeaderWidth="6" RowEditEnding="dgItems_RowEditEnding">
+                <DataGrid Name="dgItems" CanUserAddRows="true" CanUserDeleteRows="true" AutoGenerateColumns="false" RowHeaderWidth="6" RowEditEnding="dgItems_RowEditEnding">
                     <DataGrid.CellStyle>
                         <Style TargetType="DataGridCell">
                             <EventSetter Event="SizeChanged" Handler="dgItems_Cell_SizeChanged" />
@@ -156,7 +156,7 @@
                         </Popup>
                     </StackPanel>
                 </ToggleButton>
-                <DataGrid Name="dgPayments" CellEditEnding="dgPayments_CellEditEnding" AutoGenerateColumns="false" RowHeaderWidth="6">
+                <DataGrid Name="dgPayments" RowEditEnding="dgPayments_RowEditEnding" AutoGenerateColumns="false" RowHeaderWidth="6">
                     <DataGrid.Resources>
                         <Style TargetType="DataGridCell">
                             <EventSetter Event="PreviewMouseDown" Handler="dgPayments_CellPreviewMouseDown" />

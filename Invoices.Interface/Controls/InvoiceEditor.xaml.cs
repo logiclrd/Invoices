@@ -10,6 +10,7 @@ using System.Windows.Media;
 
 namespace Invoices.Interface.Controls;
 
+using System.Windows.Threading;
 using Invoices.Core;
 using Invoices.Interface.Utility;
 
@@ -104,12 +105,79 @@ public partial class InvoiceEditor : UserControl
 				}
 				else
 				{
-					var itemsBindingList = new BindingList<InvoiceItem>(value.Items);
-					var taxesBindingList = new BindingList<Tax>(value.Taxes);
-					var paymentsBindingList = new BindingList<Payment>(value.Payments);
+					var itemsBindingList = new BindingListEx<InvoiceItem>(value.Items);
+					var taxesBindingList = new BindingListEx<Tax>(value.Taxes);
+					var paymentsBindingList = new BindingListEx<Payment>(value.Payments);
 
-					itemsBindingList.ListChanged += (_, _) => { OnModified(); RecalculateItemTotal(); RecalculateInvoiceTotal(); };
-					taxesBindingList.ListChanged += (_, _) => { OnModified(); RecalculateInvoiceTotal(); };
+					itemsBindingList.ListChanged +=
+						(sender, e) =>
+						{
+							if (e.ListChangedType == ListChangedType.ItemDeleted)
+								return;
+
+							if ((e.ListChangedType == ListChangedType.ItemAdded)
+							 && itemsBindingList[e.NewIndex].IsEmpty)
+								return;
+
+							OnModified();
+							RecalculateItemTotal();
+							RecalculateInvoiceTotal();
+						};
+
+					itemsBindingList.ItemRemoved +=
+						(sender, item) =>
+						{
+							if (!item.IsEmpty)
+							{
+								OnModified();
+								RecalculateItemTotal();
+								RecalculateInvoiceTotal();
+							}
+						};
+
+					taxesBindingList.ListChanged +=
+						(sender, e) =>
+						{
+							if (e.ListChangedType == ListChangedType.ItemDeleted)
+								return;
+
+							if ((e.ListChangedType == ListChangedType.ItemAdded)
+							 && taxesBindingList[e.NewIndex].IsEmpty)
+								return;
+
+							OnModified();
+							RecalculateInvoiceTotal();
+						};
+
+					taxesBindingList.ItemRemoved +=
+						(sender, item) =>
+						{
+							if (!item.IsEmpty)
+							{
+								OnModified();
+								RecalculateInvoiceTotal();
+							}
+						};
+
+					paymentsBindingList.ListChanged +=
+						(sender, e) =>
+						{
+							if (e.ListChangedType == ListChangedType.ItemDeleted)
+								return;
+
+							if ((e.ListChangedType == ListChangedType.ItemAdded)
+							 && paymentsBindingList[e.NewIndex].IsEmpty)
+								return;
+
+							OnModified();
+						};
+
+					paymentsBindingList.ItemRemoved +=
+						(sender, item) =>
+						{
+							if (!item.IsEmpty)
+								OnModified();
+						};
 
 					if (value.InvoiceDate == default)
 						value.InvoiceDate = DateTime.Today;
@@ -157,9 +225,6 @@ public partial class InvoiceEditor : UserControl
 	void txtStateDescription_TextChanged(object? sender, TextChangedEventArgs e) => OnModified();
 	void txtNotes_TextChanged(object? sender, TextChangedEventArgs e) => OnModified();
 	void txtInternalNotes_TextChanged(object? sender, TextChangedEventArgs e) => OnModified();
-	void dgItems_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e) => OnModified();
-	void dgPayments_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e) => OnModified();
-	void dgItems_RowEditEnding(object? sender, DataGridRowEditEndingEventArgs e) => OnModified();
 
 	void dtpInvoiceDate_PreviewKeyDown(object? sender, KeyEventArgs e)
 	{
@@ -237,6 +302,39 @@ public partial class InvoiceEditor : UserControl
 			tbQuickTaxes.IsChecked = false;
 	}
 
+	bool _inRowEndingEvent = false;
+
+	void dgItems_RowEditEnding(object? sender, DataGridRowEditEndingEventArgs e)
+	{
+		if (_inRowEndingEvent)
+			return;
+
+		_inRowEndingEvent = true;
+
+		try
+		{
+			if (dgItems.SelectedItem is InvoiceItem item)
+			{
+				Dispatcher.BeginInvoke(
+					DispatcherPriority.ApplicationIdle,
+					() =>
+					{
+						if (item.IsEmpty)
+						{
+							if (!(dgItems.ItemsSource is BindingList<InvoiceItem> itemsBindingList))
+								return;
+
+							itemsBindingList.Remove(item);
+						}
+					});
+			}
+		}
+		finally
+		{
+			_inRowEndingEvent = false;
+		}
+	}
+
 	void dgTaxes_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
 	{
 		AnnealTaxes(e);
@@ -277,6 +375,37 @@ public partial class InvoiceEditor : UserControl
 			tbQuickPayments.IsChecked = false;
 	}
 
+	void dgPayments_RowEditEnding(object? sender, DataGridRowEditEndingEventArgs e)
+	{
+		if (_inRowEndingEvent)
+			return;
+
+		_inRowEndingEvent = true;
+
+		try
+		{
+			if (dgPayments.SelectedItem is Payment payment)
+			{
+				Dispatcher.BeginInvoke(
+					DispatcherPriority.ApplicationIdle,
+					() =>
+					{
+						if (payment.IsEmpty)
+						{
+							if (!(dgPayments.ItemsSource is BindingList<Payment> paymentsBindingList))
+								return;
+
+							paymentsBindingList.Remove(payment);
+						}
+					});
+			}
+		}
+		finally
+		{
+			_inRowEndingEvent = false;
+		}
+	}
+
 	void cmdChangeCustomer_Click(object? sender, RoutedEventArgs e)
 	{
 		if (_invoice is Invoice invoice)
@@ -307,21 +436,27 @@ public partial class InvoiceEditor : UserControl
 	{
 		if (FindResource("AllTaxes") is TaxDefinitionList tlAllTaxes)
 		{
+			BindingList<Tax> gridSource = (BindingList<Tax>)dgTaxes.ItemsSource;
+
 			if ((e.EditAction == DataGridEditAction.Commit)
 			 && (e.Column == dgcbcTaxName))
 			{
 				var taxSelector = (ComboBox)e.EditingElement;
 
-				int selectedTaxID = (int)taxSelector.SelectedValue;
-
-				BindingList<Tax> gridSource = (BindingList<Tax>)dgTaxes.ItemsSource;
-
-				for (int i=0; i < tlAllTaxes.Count; i++)
-					if (tlAllTaxes[i].TaxID == selectedTaxID)
-					{
-						gridSource[e.Row.GetIndex()] = Tax.Rehydrate(tlAllTaxes[i]);
-						break;
-					}
+				if (taxSelector.SelectedValue is int selectedTaxID)
+				{
+					for (int i = 0; i < tlAllTaxes.Count; i++)
+						if (tlAllTaxes[i].TaxID == selectedTaxID)
+						{
+							gridSource[e.Row.GetIndex()] = Tax.Rehydrate(tlAllTaxes[i]);
+							break;
+						}
+				}
+				else
+				{
+					e.Cancel = true;
+					dgTaxes.CancelEdit();
+				}
 			}
 		}
 	}

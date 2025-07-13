@@ -52,4 +52,18 @@ public class Payment
 				PaymentProcessingFee = paymentProcessingFee,
 			};
 	}
+
+	public bool IsEmpty
+	{
+		get
+		{
+			return
+				(PaymentType == default) &&
+				string.IsNullOrWhiteSpace(PaymentTypeCustom) &&
+				((ReceivedDateTime == null) || (ReceivedDateTime == default(DateTime))) &&
+				(Amount == 0) &&
+				string.IsNullOrWhiteSpace(ReferenceNumber) &&
+				(PaymentProcessingFee == 0);
+		}
+	}
 }
