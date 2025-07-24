@@ -246,11 +246,6 @@ public partial class InvoiceEditor : UserControl
 		}
 	}
 
-	void tbTemplates_SizeChanged(object? sender, SizeChangedEventArgs e)
-	{
-		pTemplatePicker.Width = e.NewSize.Width;
-	}
-
 	void itpTemplatePicker_ItemTemplateActivated(object? sender, ItemTemplate template)
 	{
 		var newItem = new InvoiceItem();
@@ -262,19 +257,6 @@ public partial class InvoiceEditor : UserControl
 		newItem.UnitPrice = template.UnitPrice;
 
 		items.Add(newItem);
-
-		tbTemplates.IsChecked = false;
-	}
-
-	void itpTemplatePicker_LostFocus(object? sender, RoutedEventArgs e)
-	{
-		if (e.OriginalSource == itpTemplatePicker)
-			tbTemplates.IsChecked = false;
-	}
-
-	void tbQuickTaxes_SizeChanged(object? sender, SizeChangedEventArgs e)
-	{
-		pQuickTaxPicker.Width = e.NewSize.Width;
 	}
 
 	void qipQuickTaxPicker_QuickItemActivated(object? sender, QuickItem item)
@@ -292,14 +274,6 @@ public partial class InvoiceEditor : UserControl
 		taxesBindingList.Add(newTax);
 
 		OnModified();
-
-		tbQuickTaxes.IsChecked = false;
-	}
-
-	void qipQuickTaxPicker_LostFocus(object? sender, RoutedEventArgs e)
-	{
-		if (e.OriginalSource == qipQuickTaxPicker)
-			tbQuickTaxes.IsChecked = false;
 	}
 
 	bool _inRowEndingEvent = false;
@@ -341,11 +315,6 @@ public partial class InvoiceEditor : UserControl
 		OnModified();
 	}
 
-	void tbQuickPayments_SizeChanged(object? sender, SizeChangedEventArgs e)
-	{
-		pQuickPaymentPicker.Width = e.NewSize.Width;
-	}
-
 	void qipQuickPaymentPicker_QuickItemActivated(object? sender, QuickItem item)
 	{
 		if (!(item.Data is PaymentType paymentType))
@@ -365,14 +334,6 @@ public partial class InvoiceEditor : UserControl
 		paymentsBindingList.Add(newPayment);
 
 		OnModified();
-
-		tbQuickPayments.IsChecked = false;
-	}
-
-	void qipQuickPaymentPicker_LostFocus(object? sender, RoutedEventArgs e)
-	{
-		if (e.OriginalSource == qipQuickPaymentPicker)
-			tbQuickPayments.IsChecked = false;
 	}
 
 	void dgtcReceivedDateTime_DatePicker_SelectedDateChanged(object? sender, SelectionChangedEventArgs e)

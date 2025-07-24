@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace Invoices.Interface.Controls;
 
@@ -14,7 +15,7 @@ public partial class ItemTemplatePicker : UserControl
 	{
 		InitializeComponent();
 
-		DataContext = this;
+		icItems.SetBinding(ItemsControl.ItemsSourceProperty, new Binding() { Source = this, Path = new PropertyPath(ItemTemplatesProperty), Mode = BindingMode.OneWay });
 	}
 
 	public static readonly DependencyProperty ItemTemplatesProperty = DependencyProperty.Register(nameof(ItemTemplates), typeof(IList<ItemTemplate>), typeof(ItemTemplatePicker));

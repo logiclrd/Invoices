@@ -66,14 +66,11 @@
 
             <StackPanel Margin="12">
                 <Label>Items</Label>
-                <ToggleButton Name="tbTemplates" SizeChanged="tbTemplates_SizeChanged">
-                    <StackPanel>
-                        <TextBlock>Templates</TextBlock>
-                        <Popup Name="pTemplatePicker" IsOpen="{Binding ElementName=tbTemplates, Path=IsChecked}" AllowsTransparency="True" StaysOpen="false" Placement="Bottom" PlacementTarget="{Binding ElementName=tbTemplates}">
-                            <controls:ItemTemplatePicker Background="#C0FFFFFF" x:Name="itpTemplatePicker" ItemTemplateActivated="itpTemplatePicker_ItemTemplateActivated" LostFocus="itpTemplatePicker_LostFocus" />
-                        </Popup>
-                    </StackPanel>
-                </ToggleButton>
+                <controls:PopOutSelector ButtonLabel="Templates">
+                    <controls:PopOutSelector.Selector>
+                        <controls:ItemTemplatePicker x:Name="itpTemplatePicker" Background="#C0FFFFFF" ItemTemplateActivated="itpTemplatePicker_ItemTemplateActivated" />
+                    </controls:PopOutSelector.Selector>
+                </controls:PopOutSelector>
                 <DataGrid Name="dgItems" CanUserAddRows="true" CanUserDeleteRows="true" AutoGenerateColumns="false" RowHeaderWidth="6" RowEditEnding="dgItems_RowEditEnding">
                     <DataGrid.CellStyle>
                         <Style TargetType="DataGridCell">
@@ -122,14 +119,11 @@
 
             <StackPanel Margin="12 100 12 12">
                 <Label>Taxes</Label>
-                <ToggleButton Name="tbQuickTaxes" SizeChanged="tbQuickTaxes_SizeChanged">
-                    <StackPanel>
-                        <TextBlock>Taxes</TextBlock>
-                        <Popup Name="pQuickTaxPicker" IsOpen="{Binding ElementName=tbQuickTaxes, Path=IsChecked}" AllowsTransparency="True" StaysOpen="false" Placement="Bottom" PlacementTarget="{Binding ElementName=tbQuickTaxes}">
-                            <controls:QuickItemPicker Background="#C0FFFFFF" x:Name="qipQuickTaxPicker" QuickItemActivated="qipQuickTaxPicker_QuickItemActivated" LostFocus="qipQuickTaxPicker_LostFocus" />
-                        </Popup>
-                    </StackPanel>
-                </ToggleButton>
+                <controls:PopOutSelector ButtonLabel="Taxes">
+                    <controls:PopOutSelector.Selector>
+                        <controls:QuickItemPicker x:Name="qipQuickTaxPicker" QuickItemActivated="qipQuickTaxPicker_QuickItemActivated" />
+                    </controls:PopOutSelector.Selector>
+                </controls:PopOutSelector>
                 <DataGrid Name="dgTaxes" CellEditEnding="dgTaxes_CellEditEnding" AutoGenerateColumns="false" RowHeaderWidth="6">
                     <DataGrid.Columns>
                         <DataGridComboBoxColumn x:Name="dgcbcTaxName" Header="Name" SelectedValueBinding="{Binding TaxID}" SelectedItemBinding="{Binding TaxName}" ItemsSource="{StaticResource AllTaxes}" DisplayMemberPath="TaxName" SelectedValuePath="TaxID" />
@@ -148,14 +142,11 @@
 
             <StackPanel Margin="12 100 12 12">
                 <Label>Payments</Label>
-                <ToggleButton Name="tbQuickPayments" SizeChanged="tbQuickPayments_SizeChanged">
-                    <StackPanel>
-                        <TextBlock>Quick Payments – Pay 100% By Method</TextBlock>
-                        <Popup Name="pQuickPaymentPicker" IsOpen="{Binding ElementName=tbQuickPayments, Path=IsChecked}" AllowsTransparency="True" StaysOpen="false" Placement="Bottom" PlacementTarget="{Binding ElementName=tbQuickPayments}">
-                            <controls:QuickItemPicker Background="#C0FFFFFF" x:Name="qipQuickPaymentPicker" QuickItemActivated="qipQuickPaymentPicker_QuickItemActivated" LostFocus="qipQuickPaymentPicker_LostFocus" />
-                        </Popup>
-                    </StackPanel>
-                </ToggleButton>
+                <controls:PopOutSelector ButtonLabel="Quick Payments – Pay 100% By Method">
+                    <controls:PopOutSelector.Selector>
+                            <controls:QuickItemPicker Background="#C0FFFFFF" x:Name="qipQuickPaymentPicker" QuickItemActivated="qipQuickPaymentPicker_QuickItemActivated" />
+                    </controls:PopOutSelector.Selector>
+                </controls:PopOutSelector>
                 <DataGrid Name="dgPayments" RowEditEnding="dgPayments_RowEditEnding" AutoGenerateColumns="false" RowHeaderWidth="6">
                     <DataGrid.Resources>
                         <Style TargetType="DataGridCell">

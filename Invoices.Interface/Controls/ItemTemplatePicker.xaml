@@ -5,7 +5,7 @@
              xmlns:core="clr-namespace:Invoices.Core;assembly=Invoices.Core"
              x:Class="Invoices.Interface.Controls.ItemTemplatePicker">
     <ScrollViewer>
-        <ItemsControl ItemsSource="{Binding ItemTemplates}">
+        <ItemsControl Name="icItems">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <WrapPanel />
