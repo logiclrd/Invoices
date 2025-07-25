@@ -8,7 +8,7 @@ public class Payment : INotifyPropertyChanged
 {
 	PaymentType _paymentType;
 	string? _paymentTypeCustom;
-	DateTime? _receivedDateTime;
+	DateTime? _receivedDateTimeUTC;
 	decimal _amount;
 	string? _referenceNumber;
 	decimal _paymentProcessingFee;
@@ -25,19 +25,40 @@ public class Payment : INotifyPropertyChanged
 		set { _paymentTypeCustom = value; OnPropertyChanged(); }
 	}
 
-	public DateTime? ReceivedDateTime
+	public DateTime? ReceivedDateTimeUTC
 	{
-		get => _receivedDateTime;
-		set { _receivedDateTime = value; OnPropertyChanged(); OnPropertyChanged(nameof(ReceivedDate)); }
+		get => _receivedDateTimeUTC;
+		set { _receivedDateTimeUTC = value; OnPropertyChanged(); OnPropertyChanged(nameof(ReceivedDate)); }
+	}
+
+	public DateTime? ReceivedDateTimeLocal
+	{
+		get
+		{
+			if (_receivedDateTimeUTC.HasValue)
+				return _receivedDateTimeUTC.Value.ToLocalTime();
+			else
+				return null;
+		}
+		set
+		{
+			ReceivedDateTimeUTC = value?.ToUniversalTime();
+		}
 	}
 
 	public DateTime? ReceivedDate
 	{
-		get => _receivedDateTime?.Date;
+		get
+		{
+			if (_receivedDateTimeUTC.HasValue)
+				return _receivedDateTimeUTC.Value.ToLocalTime().Date;
+			else
+				return null;
+		}
 		set
 		{
-			_receivedDateTime = CalculateUpdatedReceivedDateTimeFromReceivedDateChange(_receivedDateTime, value);
-			OnPropertyChanged(nameof(ReceivedDateTime));
+			_receivedDateTimeUTC = CalculateUpdatedReceivedDateTimeFromReceivedDateChange(_receivedDateTimeUTC?.ToLocalTime(), value)?.ToUniversalTime();
+			OnPropertyChanged(nameof(ReceivedDateTimeUTC));
 			OnPropertyChanged();
 		}
 	}
@@ -94,17 +115,17 @@ public class Payment : INotifyPropertyChanged
 		}
 	}
 
-	public static Payment Rehydrate((int InvoiceID, int Sequence, PaymentType PaymentType, string? PaymentTypeCustom, DateTime? ReceivedDateTime, decimal Amount, string? ReferenceNumber, decimal PaymentProcessingFee) data)
-		=> Rehydrate(data.PaymentType, data.PaymentTypeCustom, data.ReceivedDateTime, data.Amount, data.ReferenceNumber, data.PaymentProcessingFee);
+	public static Payment Rehydrate((int InvoiceID, int Sequence, PaymentType PaymentType, string? PaymentTypeCustom, DateTime? ReceivedDateTimeUTC, decimal Amount, string? ReferenceNumber, decimal PaymentProcessingFee) data)
+		=> Rehydrate(data.PaymentType, data.PaymentTypeCustom, data.ReceivedDateTimeUTC, data.Amount, data.ReferenceNumber, data.PaymentProcessingFee);
 
-	public static Payment Rehydrate(PaymentType paymentType, string? paymentTypeCustom, DateTime? receivedDateTime, decimal amount, string? referenceNumber, decimal paymentProcessingFee)
+	public static Payment Rehydrate(PaymentType paymentType, string? paymentTypeCustom, DateTime? receivedDateTimeUTC, decimal amount, string? referenceNumber, decimal paymentProcessingFee)
 	{
 		return
 			new Payment()
 			{
 				PaymentType = paymentType,
 				PaymentTypeCustom = paymentTypeCustom,
-				ReceivedDateTime = receivedDateTime,
+				ReceivedDateTimeUTC = receivedDateTimeUTC,
 				Amount = amount,
 				ReferenceNumber = referenceNumber,
 				PaymentProcessingFee = paymentProcessingFee,
@@ -118,7 +139,7 @@ public class Payment : INotifyPropertyChanged
 			return
 				(PaymentType == default) &&
 				string.IsNullOrWhiteSpace(PaymentTypeCustom) &&
-				((ReceivedDateTime == null) || (ReceivedDateTime == default(DateTime))) &&
+				((ReceivedDateTimeUTC == null) || (ReceivedDateTimeUTC == default(DateTime))) &&
 				(Amount == 0) &&
 				string.IsNullOrWhiteSpace(ReferenceNumber) &&
 				(PaymentProcessingFee == 0);

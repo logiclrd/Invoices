@@ -163,16 +163,16 @@ public class InvoiceRenderer
 		plan.Items.Add(new RenderPlanItem(ItemType.Image, Assets.GetPath("Logo elements receipt.png")));
 
 		string invoiceNumber = "Invoice #" + invoice.InvoiceNumber;
-		string invoiceDate = invoice.InvoiceDate.ToString("yyyy-MM-dd");
+		string invoiceDate = invoice.InvoiceDateUTC.ToString("yyyy-MM-dd");
 		int spaces = StandardFont.LineCharacterWidth - invoiceNumber.Length - invoiceDate.Length;
 
 		plan.Items.Add(new RenderPlanItem(ItemType.Text, invoiceNumber + new string(' ', spaces) + invoiceDate));
 		plan.Items.Add(new RenderPlanItem(ItemType.Text, ""));
 
-		if ((invoice.DueDate is DateTime dueDate)
-		 && (dueDate != DateTime.MinValue))
+		if ((invoice.DueDateUTC is DateTime dueDateUTC)
+		 && (dueDateUTC != DateTime.MinValue))
 		{
-			plan.Items.Add(new RenderPlanItem(ItemType.Text, "Due: " + dueDate.ToString("yyyy-MM-dd")));
+			plan.Items.Add(new RenderPlanItem(ItemType.Text, "Due: " + dueDateUTC.ToLocalTime().ToString("yyyy-MM-dd")));
 			plan.Items.Add(new RenderPlanItem(ItemType.Text, ""));
 		}
 
@@ -283,16 +283,16 @@ public class InvoiceRenderer
 
 				plan.Items.Add(new RenderPlanItem(ItemType.Text, summaryIndent + header + new string(' ', spaces) + amountText));
 
-				if (payment.ReceivedDateTime.HasValue)
+				if (payment.ReceivedDateTimeUTC.HasValue)
 				{
 					string formatString;
 
-					if (payment.ReceivedDateTime.Value.TimeOfDay != TimeSpan.Zero)
+					if (payment.ReceivedDateTimeUTC.Value.TimeOfDay != TimeSpan.Zero)
 						formatString = "yyyy-MM-dd HH:mm";
 					else
 						formatString = "yyyy-MM-dd";
 
-					string receivedDateTimeText = payment.ReceivedDateTime.Value.ToString(formatString);
+					string receivedDateTimeText = payment.ReceivedDateTimeUTC.Value.ToLocalTime().ToString(formatString);
 
 					plan.Items.Add(new RenderPlanItem(ItemType.Text, summaryIndent + receivedDateTimeText));
 				}

@@ -168,16 +168,16 @@ MERGE INTO CustomerLines
 
 			void InsertInvoices()
 			{
-				cmd.CommandText = "INSERT INTO Invoices (InvoiceNumber, InvoiceDate, InvoiceStateID, InvoiceStateDescription, InvoiceeCustomerID, PayableTo, ProjectName, DueDate) OUTPUT (INSERTED.InvoiceID) VALUES (@InvoiceNumber, @InvoiceDate, @InvoiceStateID, @InvoiceStateDescription, @InvoiceeCustomerID, @PayableTo, @ProjectName, @DueDate)";
+				cmd.CommandText = "INSERT INTO Invoices (InvoiceNumber, InvoiceDateUTC, InvoiceStateID, InvoiceStateDescription, InvoiceeCustomerID, PayableTo, ProjectName, DueDate) OUTPUT (INSERTED.InvoiceID) VALUES (@InvoiceNumber, @InvoiceDateUTC, @InvoiceStateID, @InvoiceStateDescription, @InvoiceeCustomerID, @PayableTo, @ProjectName, @DueDateUTC)";
 
 				cmd.Parameters.Add("@InvoiceNumber", SqlDbType.NVarChar, 10).Value = invoice.InvoiceNumber;
-				cmd.Parameters.Add("@InvoiceDate", SqlDbType.DateTime2).Value = invoice.InvoiceDate;
+				cmd.Parameters.Add("@InvoiceDateUTC", SqlDbType.DateTime2).Value = invoice.InvoiceDateUTC;
 				cmd.Parameters.Add("@InvoiceStateID", SqlDbType.Int).Value = (int)invoice.State;
 				cmd.Parameters.Add("@InvoiceStateDescription", SqlDbType.NVarChar, 250).Value = invoice.StateDescription;
 				cmd.Parameters.Add("@InvoiceeCustomerID", SqlDbType.Int).Value = (invoice.InvoiceeCustomer != null) ? invoice.InvoiceeCustomer.CustomerID : DBNull.Value;
 				cmd.Parameters.Add("@PayableTo", SqlDbType.NVarChar, 250).Value = invoice.PayableTo;
 				cmd.Parameters.Add("@ProjectName", SqlDbType.NVarChar, 250).Value = invoice.ProjectName;
-				cmd.Parameters.Add("@DueDate", SqlDbType.DateTime2).Value = invoice.DueDate.HasValue ? invoice.DueDate : DBNull.Value;
+				cmd.Parameters.Add("@DueDateUTC", SqlDbType.DateTime2).Value = invoice.DueDateUTC.HasValue ? invoice.DueDateUTC : DBNull.Value;
 
 				invoiceID = (int)cmd.ExecuteScalar();
 
@@ -191,23 +191,23 @@ MERGE INTO CustomerLines
 				cmd.CommandText = @"
 UPDATE Invoices
   SET InvoiceNumber = @InvoiceNumber,
-      InvoiceDate = @InvoiceDate,
+      InvoiceDateUTC = @InvoiceDateUTC,
       InvoiceStateID = @InvoiceStateID,
       InvoiceStateDescription = @InvoiceStateDescription,
       InvoiceeCustomerID = @InvoiceeCustomerID,
       PayableTo = @PayableTo,
       ProjectName = @ProjectName,
-      DueDate = @DueDate
+      DueDateUTC = @DueDateUTC
   WHERE InvoiceID = @InvoiceID";
 
 				cmd.Parameters.Add("@InvoiceNumber", SqlDbType.NVarChar, 10).Value = invoice.InvoiceNumber;
-				cmd.Parameters.Add("@InvoiceDate", SqlDbType.DateTime2).Value = invoice.InvoiceDate;
+				cmd.Parameters.Add("@InvoiceDateUTC", SqlDbType.DateTime2).Value = invoice.InvoiceDateUTC;
 				cmd.Parameters.Add("@InvoiceStateID", SqlDbType.Int).Value = (int)invoice.State;
 				cmd.Parameters.Add("@InvoiceStateDescription", SqlDbType.NVarChar, 250).Value = invoice.StateDescription;
 				cmd.Parameters.Add("@InvoiceeCustomerID", SqlDbType.Int).Value = (invoice.InvoiceeCustomer != null) ? invoice.InvoiceeCustomer.CustomerID : DBNull.Value;
 				cmd.Parameters.Add("@PayableTo", SqlDbType.NVarChar, 250).Value = invoice.PayableTo;
 				cmd.Parameters.Add("@ProjectName", SqlDbType.NVarChar, 250).Value = invoice.ProjectName;
-				cmd.Parameters.Add("@DueDate", SqlDbType.DateTime2).Value = invoice.DueDate.HasValue ? invoice.DueDate : DBNull.Value;
+				cmd.Parameters.Add("@DueDateUTC", SqlDbType.DateTime2).Value = invoice.DueDateUTC.HasValue ? invoice.DueDateUTC : DBNull.Value;
 				cmd.Parameters.Add("@InvoiceID", SqlDbType.Int).Value = invoice.InvoiceID;
 
 				cmd.ExecuteNonQuery();
@@ -342,14 +342,14 @@ UPDATE Invoices
 
 			void InsertInvoicePayments()
 			{
-				cmd.CommandText = "INSERT INTO InvoicePayments (InvoiceID, Sequence, PaymentTypeID, PaymentTypeCustom, ReceivedDateTime, Amount, ReferenceNumber, PaymentProcessingFee) VALUES (@InvoiceID, @Sequence, @PaymentTypeID, @PaymentTypeCustom, @ReceivedDateTime, @Amount, @ReferenceNumber, @PaymentProcessingFee)";
+				cmd.CommandText = "INSERT INTO InvoicePayments (InvoiceID, Sequence, PaymentTypeID, PaymentTypeCustom, ReceivedDateTimeUTC, Amount, ReferenceNumber, PaymentProcessingFee) VALUES (@InvoiceID, @Sequence, @PaymentTypeID, @PaymentTypeCustom, @ReceivedDateTimeUTC, @Amount, @ReferenceNumber, @PaymentProcessingFee)";
 
 				cmd.Parameters.Add("@InvoiceID", SqlDbType.Int).Value = invoiceID;
 
 				var sequenceParam = cmd.Parameters.Add("@Sequence", SqlDbType.Int);
 				var paymentTypeIDParam = cmd.Parameters.Add("@PaymentTypeID", SqlDbType.Int);
 				var paymentTypeCustomParam = cmd.Parameters.Add("@PaymentTypeCustom", SqlDbType.NVarChar);
-				var receivedDateTimeParam = cmd.Parameters.Add("@ReceivedDateTime", SqlDbType.DateTime2);
+				var receivedDateTimeUTCParam = cmd.Parameters.Add("@ReceivedDateTimeUTC", SqlDbType.DateTime2);
 				var amountParam = cmd.Parameters.Add("@Amount", SqlDbType.Decimal);
 				var referenceNumberParam = cmd.Parameters.Add("@ReferenceNumber", SqlDbType.NVarChar);
 				var paymentProcessingFeeParam = cmd.Parameters.Add("@PaymentProcessingFee", SqlDbType.Decimal);
@@ -358,13 +358,13 @@ UPDATE Invoices
 				{
 					var payment = invoice.Payments[i];
 
-					if (payment.ReceivedDateTime == null)
-						payment.ReceivedDateTime = DateTime.Now;
+					if (payment.ReceivedDateTimeUTC == null)
+						payment.ReceivedDateTimeUTC = DateTime.UtcNow;
 
 					sequenceParam.Value = i;
 					paymentTypeIDParam.Value = (int)payment.PaymentType;
 					paymentTypeCustomParam.Value = payment.PaymentTypeCustom ?? (object)DBNull.Value;
-					receivedDateTimeParam.Value = payment.ReceivedDateTime;
+					receivedDateTimeUTCParam.Value = payment.ReceivedDateTimeUTC;
 					amountParam.Value = payment.Amount;
 					referenceNumberParam.Value = payment.ReferenceNumber ?? (object)DBNull.Value;
 					paymentProcessingFeeParam.Value = payment.PaymentProcessingFee;
@@ -704,18 +704,18 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 			int invoiceID = reader.GetInt32(invoiceID_ordinal);
 			int sequence = reader.GetInt32(sequence_ordinal);
 			int taxID = reader.GetInt32(taxID_ordinal);
-			
+
 			yield return (invoiceID, sequence, taxID);
 		}
 	}
 
-	IEnumerable<(int InvoiceID, int Sequence, PaymentType PaymentType, string? PaymentTypeCustom, DateTime? ReceivedDateTime, decimal Amount, string? referenceNumber, decimal paymentProcessingFee)> ReadInvoicePayments(SqlDataReader reader)
+	IEnumerable<(int InvoiceID, int Sequence, PaymentType PaymentType, string? PaymentTypeCustom, DateTime? ReceivedDateTimeUTC, decimal Amount, string? referenceNumber, decimal paymentProcessingFee)> ReadInvoicePayments(SqlDataReader reader)
 	{
 		int invoiceID_ordinal = reader.GetOrdinal("InvoiceID");
 		int sequence_ordinal = reader.GetOrdinal("Sequence");
 		int paymentTypeID_ordinal = reader.GetOrdinal("PaymentTypeID");
 		int paymentTypeCustom_ordinal = reader.GetOrdinal("PaymentTypeCustom");
-		int receivedDateTime_ordinal = reader.GetOrdinal("ReceivedDateTime");
+		int receivedDateTimeUTC_ordinal = reader.GetOrdinal("ReceivedDateTimeUTC");
 		int amount_ordinal = reader.GetOrdinal("Amount");
 		int referenceNumber_ordinal = reader.GetOrdinal("ReferenceNumber");
 		int paymentProcessingFee_ordinal = reader.GetOrdinal("PaymentProcessingFee");
@@ -728,12 +728,12 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 			int sequence = reader.GetInt32(sequence_ordinal);
 			int paymentTypeID = reader.GetInt32(paymentTypeID_ordinal);
 			string? paymentTypeCustom = reader.IsDBNull(paymentTypeCustom_ordinal) ? default : reader.GetString(paymentTypeCustom_ordinal);
-			DateTime? receivedDateTime = reader.IsDBNull(receivedDateTime_ordinal) ? default : reader.GetDateTime(receivedDateTime_ordinal);
+			DateTime? receivedDateTimeUTC = reader.IsDBNull(receivedDateTimeUTC_ordinal) ? default : reader.GetDateTime(receivedDateTimeUTC_ordinal);
 			decimal amount = reader.GetDecimal(amount_ordinal);
 			string? referenceNumber = reader.IsDBNull(referenceNumber_ordinal) ? default : reader.GetString(referenceNumber_ordinal);
 			decimal paymentProcessingFee = reader.GetDecimal(paymentProcessingFee_ordinal);
 
-			yield return (invoiceID, sequence, (PaymentType)paymentTypeID, paymentTypeCustom, receivedDateTime, amount, referenceNumber, paymentProcessingFee);
+			yield return (invoiceID, sequence, (PaymentType)paymentTypeID, paymentTypeCustom, receivedDateTimeUTC, amount, referenceNumber, paymentProcessingFee);
 		}
 	}
 
@@ -761,13 +761,13 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 	{
 		int invoiceID_ordinal = reader.GetOrdinal("InvoiceID");
 		int invoiceNumber_ordinal = reader.GetOrdinal("InvoiceNumber");
-		int invoiceDate_ordinal = reader.GetOrdinal("InvoiceDate");
+		int invoiceDateUTC_ordinal = reader.GetOrdinal("InvoiceDateUTC");
 		int invoiceStateID_ordinal = reader.GetOrdinal("InvoiceStateID");
 		int invoiceStateDescription_ordinal = reader.GetOrdinal("InvoiceStateDescription");
 		int invoiceeCustomerID_ordinal = reader.GetOrdinal("InvoiceeCustomerID");
 		int payableTo_ordinal = reader.GetOrdinal("PayableTo");
 		int projectName_ordinal = reader.GetOrdinal("ProjectName");
-		int dueDate_ordinal = reader.GetOrdinal("DueDate");
+		int dueDateUTC_ordinal = reader.GetOrdinal("DueDateUTC");
 
 		while (reader.Read())
 		{
@@ -775,13 +775,13 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 
 			int invoiceID = reader.GetInt32(invoiceID_ordinal);
 			string invoiceNumber = reader.GetString(invoiceNumber_ordinal);
-			DateTime invoiceDate = reader.GetDateTime(invoiceDate_ordinal);
+			DateTime invoiceDateUTC = reader.GetDateTime(invoiceDateUTC_ordinal);
 			InvoiceState state = (InvoiceState)reader.GetInt32(invoiceStateID_ordinal);
 			string stateDescription = reader.GetString(invoiceStateDescription_ordinal);
 			int? invoiceeCustomerID = reader.IsDBNull(invoiceeCustomerID_ordinal) ? null : reader.GetInt32(invoiceeCustomerID_ordinal);
 			string payableTo = reader.GetString(payableTo_ordinal);
 			string projectName = reader.GetString(projectName_ordinal);
-			DateTime? dueDate = reader.IsDBNull(dueDate_ordinal) ? default : reader.GetDateTime(dueDate_ordinal);
+			DateTime? dueDateUTC = reader.IsDBNull(dueDateUTC_ordinal) ? default : reader.GetDateTime(dueDateUTC_ordinal);
 
 			Customer? customer = null;
 
@@ -795,13 +795,13 @@ SELECT * FROM Invoices WHERE InvoiceID = @InvoiceID";
 
 					InvoiceID = invoiceID,
 					InvoiceNumber = invoiceNumber,
-					InvoiceDate = invoiceDate,
+					InvoiceDateUTC = invoiceDateUTC,
 					State = state,
 					StateDescription = stateDescription,
 					InvoiceeCustomer = customer,
 					PayableTo = payableTo,
 					ProjectName = projectName,
-					DueDate = dueDate,
+					DueDateUTC = dueDateUTC,
 				};
 		}
 	}

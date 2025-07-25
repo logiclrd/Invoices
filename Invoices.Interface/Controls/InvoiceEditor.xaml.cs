@@ -10,8 +10,11 @@ using System.Windows.Media;
 
 namespace Invoices.Interface.Controls;
 
+using System.IO;
 using System.Windows.Threading;
 using Invoices.Core;
+using Invoices.Integration;
+using Invoices.Integration.Square;
 using Invoices.Interface.Utility;
 
 public partial class InvoiceEditor : UserControl
@@ -179,13 +182,13 @@ public partial class InvoiceEditor : UserControl
 								OnModified();
 						};
 
-					if (value.InvoiceDate == default)
-						value.InvoiceDate = DateTime.Today;
+					if (value.InvoiceDateUTC == default)
+						value.InvoiceDateUTC = DateTime.Today;
 
 					txtInvoiceNumber.Text = value.InvoiceNumber;
-					dtpInvoiceDate.SelectedDate = value.InvoiceDate;
-					chkSetDueDate.IsChecked = value.DueDate.HasValue;
-					dtpDueDate.SelectedDate = value.DueDate ?? DateTime.Today;
+					dtpInvoiceDate.SelectedDate = value.InvoiceDateUTC;
+					chkSetDueDate.IsChecked = value.DueDateUTC.HasValue;
+					dtpDueDate.SelectedDate = value.DueDateUTC ?? DateTime.Today;
 					txtCustomer.Text = value.InvoiceeCustomer?.LongSummary ?? "";
 					cboState.SelectedValue = value.State;
 					txtStateDescription.Text = value.StateDescription;
@@ -328,12 +331,80 @@ public partial class InvoiceEditor : UserControl
 		var newPayment = new Payment();
 
 		newPayment.PaymentType = paymentType;
-		newPayment.ReceivedDateTime = DateTime.Now;
+		newPayment.ReceivedDateTimeUTC = DateTime.UtcNow;
 		newPayment.Amount = _lastCalculatedInvoiceTotal;
 
 		paymentsBindingList.Add(newPayment);
 
 		OnModified();
+	}
+
+	void ImportPayment(ExternalPayment externalPayment)
+	{
+		if (_invoice == null)
+			return;
+		if (!(dgPayments.ItemsSource is BindingList<Payment> paymentsBindingList))
+			return;
+
+		var newPayment = new Payment();
+
+		newPayment.PaymentType = externalPayment.PaymentType;
+		newPayment.ReceivedDateTimeUTC = externalPayment.TransactionDateTimeUTC;
+		newPayment.ReferenceNumber = externalPayment.ReferenceNumber;
+		newPayment.Amount = externalPayment.Total;
+		newPayment.PaymentProcessingFee = externalPayment.ProcessingFee;
+
+		paymentsBindingList.Add(newPayment);
+
+		OnModified();
+	}
+
+	Window FindWindow()
+	{
+		DependencyObject obj = this;
+
+		while (obj != null)
+		{
+			obj = VisualTreeHelper.GetParent(obj);
+
+			if (obj is Window window)
+				return window;
+		}
+
+		throw new Exception("Could not locate Window");
+	}
+
+	void ShowImportPaymentDialog(IPaymentDataSource dataSource)
+	{
+		var dialog = new PaymentImportDialog();
+
+		dialog.Owner = FindWindow();
+		dialog.SetDataSource(dataSource);
+
+		bool? result = dialog.ShowDialog();
+
+		if ((result ?? false) && (dialog.SelectedExternalPayment is ExternalPayment payment))
+			ImportPayment(payment);
+	}
+
+	void cmdImportPayPal_Click(object? sender, RoutedEventArgs e)
+	{
+		MessageBox.Show("Not yet implemented");
+	}
+
+	void cmdImportSquare_Click(object? sender, RoutedEventArgs e)
+	{
+		string applicationPath = Path.GetDirectoryName(typeof(Program).Assembly.Location) ?? ".";
+
+		string configPath = Path.Combine(
+			applicationPath,
+			"SquareConfiguration.json");
+
+		var config = SquareConfiguration.LoadFrom(configPath);
+
+		var dataSource = new SquareRecentPaymentDataSource(config);
+
+		ShowImportPaymentDialog(dataSource);
 	}
 
 	void dgtcReceivedDateTime_DatePicker_SelectedDateChanged(object? sender, SelectionChangedEventArgs e)
@@ -640,12 +711,12 @@ public partial class InvoiceEditor : UserControl
 			return;
 
 		model.InvoiceNumber = txtInvoiceNumber.Text;
-		model.InvoiceDate = dtpInvoiceDate.SelectedDate ?? DateTime.Today;
+		model.InvoiceDateUTC = dtpInvoiceDate.SelectedDate ?? DateTime.Today;
 
 		if (chkSetDueDate.IsChecked ?? false)
-			model.DueDate = dtpDueDate.SelectedDate ?? DateTime.Today;
+			model.DueDateUTC = dtpDueDate.SelectedDate?.ToUniversalTime() ?? DateTime.Today;
 		else
-			model.DueDate = null;
+			model.DueDateUTC = null;
 
 		if (cboState.SelectedValue != null)
 			model.State = (InvoiceState)cboState.SelectedValue;
@@ -660,8 +731,8 @@ public partial class InvoiceEditor : UserControl
 		model.InternalNotes.AddRange(txtInternalNotes.Text.Split('\n'));
 
 		foreach (var payment in model.Payments)
-			if (payment.ReceivedDateTime == null)
-				payment.ReceivedDateTime = DateTime.Now;
+			if (payment.ReceivedDateTimeUTC == null)
+				payment.ReceivedDateTimeUTC = DateTime.UtcNow;
 	}
 
 	bool _loading;

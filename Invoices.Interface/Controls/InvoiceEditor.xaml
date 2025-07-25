@@ -142,6 +142,21 @@
 
             <StackPanel Margin="12 100 12 12">
                 <Label>Payments</Label>
+                <controls:PopOutSelector ButtonLabel="Import Payment">
+                    <controls:PopOutSelector.Selector>
+                        <WrapPanel>
+                            <WrapPanel.Resources>
+                                <Style TargetType="Button">
+                                    <Setter Property="Width" Value="130" />
+                                    <Setter Property="Height" Value="60" />
+                                    <Setter Property="Margin" Value="6" />
+                                </Style>
+                            </WrapPanel.Resources>
+                            <Button Content="PayPal" Click="cmdImportPayPal_Click" />
+                            <Button Content="Square" Click="cmdImportSquare_Click" />
+                        </WrapPanel>
+                    </controls:PopOutSelector.Selector>
+                </controls:PopOutSelector>
                 <controls:PopOutSelector ButtonLabel="Quick Payments – Pay 100% By Method">
                     <controls:PopOutSelector.Selector>
                             <controls:QuickItemPicker Background="#C0FFFFFF" x:Name="qipQuickPaymentPicker" QuickItemActivated="qipQuickPaymentPicker_QuickItemActivated" />
@@ -159,14 +174,14 @@
                         <DataGridTemplateColumn x:Name="dgtcReceivedDateTime" Header="Received">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding ReceivedDateTime}" />
+                                    <TextBlock Text="{Binding ReceivedDateTimeLocal}" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                             <DataGridTemplateColumn.CellEditingTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <DatePicker SelectedDate="{Binding ReceivedDate}" SelectedDateChanged="dgtcReceivedDateTime_DatePicker_SelectedDateChanged" />
-                                        <TextBox Text="{Binding ReceivedDateTime,StringFormat=yyyy-MM-dd HH:mm:ss}" />
+                                        <TextBox Text="{Binding ReceivedDateTimeLocal,StringFormat=yyyy-MM-dd HH:mm:ss}" />
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellEditingTemplate>

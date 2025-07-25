@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>library</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Invoices.Integration\Invoices.Integration.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Square" Version="42.0.0" />
+  </ItemGroup>
+</Project>

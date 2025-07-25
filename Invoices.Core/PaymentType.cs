@@ -25,4 +25,8 @@ public enum PaymentType
 	Discover,
 	JCB,
 	UnionPay,
+	[Description("Wallet")]
+	IntermediateWallet,
+	[Description("Other (Square)")]
+	OtherSquare,
 }

@@ -8,5 +8,10 @@
   <ItemGroup>
     <ProjectReference Include="..\Invoices.Core\Invoices.Core.csproj" />
     <ProjectReference Include="..\Invoices.Rendering\Invoices.Rendering.csproj" />
+    <ProjectReference Include="..\Invoices.Integration\Invoices.Integration.csproj" />
+    <ProjectReference Include="..\Invoices.Integration.Square\Invoices.Integration.Square.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="SquareConfiguration.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

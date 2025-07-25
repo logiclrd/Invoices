@@ -10,6 +10,12 @@
             "type": "dotnet",
             "request": "launch",
             "projectPath": "${workspaceFolder}/Invoices.Interface/Invoices.Interface.csproj"
-        }
+        },
+        {
+            "name": "C#: TestSquare Debug",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}/TestSquare/TestSquare.csproj"
+        },
     ]
 }

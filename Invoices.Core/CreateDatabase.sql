@@ -55,13 +55,13 @@ CREATE TABLE Invoices
 (
     InvoiceID               INT           NOT NULL IDENTITY(1, 1),
     InvoiceNumber           NVARCHAR(10)  NOT NULL,
-    InvoiceDate             DATETIME2     NOT NULL,
+    InvoiceDateUTC          DATETIME2     NOT NULL,
     InvoiceStateID          INT           NOT NULL,
     InvoiceStateDescription NVARCHAR(250) NOT NULL,
     InvoiceeCustomerID      INT               NULL,
     PayableTo               NVARCHAR(250) NOT NULL DEFAULT N'Wizards of the Plains',
     ProjectName             NVARCHAR(250),
-    DueDate                 DATETIME2,
+    DueDateUTC              DATETIME2,
 
     CONSTRAINT PK_Invoices PRIMARY KEY (InvoiceID),
     CONSTRAINT FK_Invoices_InvoiceStateID FOREIGN KEY (InvoiceStateID) REFERENCES InvoiceStates (InvoiceStateID),
@@ -163,7 +163,9 @@ VALUES
 (10, N'American Express'),
 (11, N'Discover'),
 (12, N'JCB'),
-(13 N'UnionPay')
+(13, N'UnionPay'),
+(14, N'Wallet'),
+(15, N'Other (Square)')
 
 CREATE TABLE InvoicePayments
 (
@@ -172,7 +174,7 @@ CREATE TABLE InvoicePayments
     Sequence             INT            NOT NULL,
     PaymentTypeID        INT            NOT NULL,
     PaymentTypeCustom    NVARCHAR(100)      NULL,
-    ReceivedDateTime     DATETIME2          NULL,
+    ReceivedDateTimeUTC  DATETIME2          NULL,
     Amount               DECIMAL(18, 2) NOT NULL,
     ReferenceNumber      NVARCHAR(100)      NULL,
     PaymentProcessingFee DECIMAL(18, 2) NOT NULL,

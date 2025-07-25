@@ -8,7 +8,7 @@ public class Invoice
 	public int InvoiceID;
 
 	public string InvoiceNumber { get; set; } = "";
-	public DateTime InvoiceDate { get; set; }
+	public DateTime InvoiceDateUTC { get; set; }
 
 	public InvoiceState State { get; set; }
 	public string StateDescription { get; set; } = "";
@@ -19,7 +19,7 @@ public class Invoice
 
 	public string ProjectName { get; set; } = "";
 
-	public DateTime? DueDate;
+	public DateTime? DueDateUTC;
 
 	public List<InvoiceItem> Items { get; set; } = new List<InvoiceItem>();
 
