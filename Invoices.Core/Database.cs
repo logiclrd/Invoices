@@ -168,7 +168,7 @@ MERGE INTO CustomerLines
 
 			void InsertInvoices()
 			{
-				cmd.CommandText = "INSERT INTO Invoices (InvoiceNumber, InvoiceDateUTC, InvoiceStateID, InvoiceStateDescription, InvoiceeCustomerID, PayableTo, ProjectName, DueDate) OUTPUT (INSERTED.InvoiceID) VALUES (@InvoiceNumber, @InvoiceDateUTC, @InvoiceStateID, @InvoiceStateDescription, @InvoiceeCustomerID, @PayableTo, @ProjectName, @DueDateUTC)";
+				cmd.CommandText = "INSERT INTO Invoices (InvoiceNumber, InvoiceDateUTC, InvoiceStateID, InvoiceStateDescription, InvoiceeCustomerID, PayableTo, ProjectName, DueDateUTC) OUTPUT (INSERTED.InvoiceID) VALUES (@InvoiceNumber, @InvoiceDateUTC, @InvoiceStateID, @InvoiceStateDescription, @InvoiceeCustomerID, @PayableTo, @ProjectName, @DueDateUTC)";
 
 				cmd.Parameters.Add("@InvoiceNumber", SqlDbType.NVarChar, 10).Value = invoice.InvoiceNumber;
 				cmd.Parameters.Add("@InvoiceDateUTC", SqlDbType.DateTime2).Value = invoice.InvoiceDateUTC;
