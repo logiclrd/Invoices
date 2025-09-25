@@ -8,7 +8,7 @@ public class Assets
 
 	static Assets()
 	{
-		s_AssetDirectoryPath = Path.GetDirectoryName(typeof(InvoiceRenderer).Assembly.Location)!;
+		s_AssetDirectoryPath = Path.Combine(Path.GetDirectoryName(typeof(InvoiceRenderer).Assembly.Location)!, "Assets");
 	}
 
 	public static string GetPath(string assetName)

@@ -6,7 +6,8 @@ using System.Windows.Media.Imaging;
 namespace Invoices.Interface;
 
 using Invoices.Core;
-using Invoices.Rendering;
+using Invoices.Rendering.Receipt;
+using Invoices.Utility;
 
 public partial class PrintPreview : Window
 {
@@ -19,7 +20,7 @@ public partial class PrintPreview : Window
 
 	public void LoadInvoice(Invoice invoice)
 	{
-		var renderer = new InvoiceRenderer();
+		var renderer = new ReceiptInvoiceRenderer();
 
 		_renderedInvoice = renderer.RenderImage(invoice);
 
