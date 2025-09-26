@@ -4,6 +4,7 @@ using System.Windows.Media.Imaging;
 
 namespace Invoices.Rendering.Plan;
 
+using System.Net.Http.Headers;
 using Invoices.Rendering.Text;
 using Invoices.Rendering.Utility;
 
@@ -11,6 +12,7 @@ public class RenderPlanValue
 {
 	public string? Value;
 	public RenderPlanValueType Type;
+	public double? MaxHeight;
 
 	public static implicit operator RenderPlanValue(string v) => new RenderPlanValue(v);
 
@@ -30,12 +32,14 @@ public class RenderPlanValue
 	public static RenderPlanValue Text(string text) => new RenderPlanValue(RenderPlanValueType.Text, text);
 	public static RenderPlanValue BoldText(string text) => new RenderPlanValue(RenderPlanValueType.BoldText, text);
 	public static RenderPlanValue TitleText(string text) => new RenderPlanValue(RenderPlanValueType.TitleText, text);
-	public static RenderPlanValue Image(string resourceName) => new RenderPlanValue(RenderPlanValueType.Image, resourceName);
+	public static RenderPlanValue Image(string resourceName, double? maxHeight = null) => new RenderPlanValue(RenderPlanValueType.Image, resourceName) { MaxHeight = maxHeight };
 
 	public double MeasureHeight(int pixelWidth, RenderFont font)
 	{
 		if (pixelWidth == 0)
 			return 0;
+
+		double scaledHeight = 0.0;
 
 		switch (Type)
 		{
@@ -43,7 +47,10 @@ public class RenderPlanValue
 				if (LoadedImage == null)
 					LoadedImage = ImageLoader.LoadImage(Value);
 
-				return LoadedImage.PixelHeight * pixelWidth / LoadedImage.PixelWidth;
+				scaledHeight = LoadedImage.PixelHeight * pixelWidth / LoadedImage.PixelWidth;
+
+				break;
+
 			case RenderPlanValueType.Text:
 			case RenderPlanValueType.BoldText:
 			case RenderPlanValueType.TitleText:
@@ -57,9 +64,16 @@ public class RenderPlanValue
 						_ => throw new Exception("Sanity failure")
 					};
 
-				return TextUtility.FlowText(pixelWidth, Value, font.GetTypeface(typefaceType)).Count() * font.LineSpacingPixels;
+				var typeface = font.GetTypeface(typefaceType);
 
-			default: return 0;
+				scaledHeight = TextUtility.FlowText(pixelWidth, Value, typeface).Count() * typeface.LineSpacingPixels;
+
+				break;
 		}
+
+		if (MaxHeight.HasValue)
+			scaledHeight = Math.Min(MaxHeight.Value, scaledHeight);
+
+		return scaledHeight;
 	}
 }

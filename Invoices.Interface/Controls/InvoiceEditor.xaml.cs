@@ -1,21 +1,26 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Media;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-
-namespace Invoices.Interface.Controls;
-
-using System.IO;
 using System.Windows.Threading;
+
 using Invoices.Core;
+
 using Invoices.Integration;
 using Invoices.Integration.Square;
 using Invoices.Interface.Utility;
+
+using Invoices.Rendering;
+using Invoices.Rendering.FullPage;
+using Invoices.Rendering.Receipt;
+
+namespace Invoices.Interface.Controls;
 
 public partial class InvoiceEditor : UserControl
 {
@@ -769,7 +774,8 @@ public partial class InvoiceEditor : UserControl
 	public event EventHandler<Customer>? CreateOrUpdateCustomer;
 	public event EventHandler<Uri>? ActivateUri;
 
-	void imgReceiptPrinter_MouseLeftButtonDown(object? sender, MouseButtonEventArgs e)
+	void ShowPrintPreview<TRenderer>()
+		where TRenderer : InvoiceRenderer, new()
 	{
 		if (_invoice != null)
 		{
@@ -777,12 +783,22 @@ public partial class InvoiceEditor : UserControl
 
 			TransferChangesToModel(invoice);
 
-			var printPreview = new PrintPreview();
+			var printPreview = new PrintPreview(new TRenderer());
 
 			printPreview.Owner = Window.GetWindow(this);
 			printPreview.LoadInvoice(invoice);
 
 			printPreview.ShowDialog();
 		}
+	}
+
+	void imgReceiptPrinter_MouseLeftButtonDown(object? sender, MouseButtonEventArgs e)
+	{
+		ShowPrintPreview<ReceiptInvoiceRenderer>();
+	}
+
+	void imgFullPagePrinter_MouseLeftButtonDown(object? sender, MouseButtonEventArgs e)
+	{
+		ShowPrintPreview<FullPageInvoiceRenderer>();
 	}
 }

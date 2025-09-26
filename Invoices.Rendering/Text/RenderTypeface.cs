@@ -11,6 +11,7 @@ public class RenderTypeface
 	public readonly double SizeFactor;
 
 	public double FontSize => Font.FontSize * SizeFactor;
+	public double LineSpacingPixels => Font.LineSpacingPixels * SizeFactor;
 
 	public RenderTypeface(RenderFont font, Typeface typeface, double sizeFactor = 1.0)
 	{

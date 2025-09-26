@@ -19,9 +19,11 @@
             <Button Name="cmdClose" Click="cmdClose_Click" HorizontalAlignment="Right" IsCancel="true">Close</Button>
         </Grid>
 
-        <ScrollViewer Name="svPresentation" Grid.Row="1" Background="Black" HorizontalScrollBarVisibility="Auto">
+        <ScrollViewer Name="svPresentation" Grid.Row="1" Background="Black" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Auto">
             <Grid Background="White" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Image Name="imgPreview" Stretch="None" Margin="30" Cursor="ScrollAll" MouseDown="imgPreview_MouseDown" MouseMove="imgPreview_MouseMove" MouseUp="imgPreview_MouseUp" />
+                <ContentControl Name="ccScale">
+                    <Image Name="imgPreview" Stretch="None" Cursor="ScrollNS" MouseDown="imgPreview_MouseDown" MouseMove="imgPreview_MouseMove" MouseUp="imgPreview_MouseUp" />
+                </ContentControl>
             </Grid>
         </ScrollViewer>
     </Grid>

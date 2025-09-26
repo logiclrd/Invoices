@@ -14,7 +14,10 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel>
             <DockPanel>
-                <image:ReceiptPrinter x:Name="imgReceiptPrinter" DockPanel.Dock="Right" Margin="8" MouseLeftButtonDown="imgReceiptPrinter_MouseLeftButtonDown" />
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <image:ReceiptPrinter x:Name="imgReceiptPrinter" Margin="8" MouseLeftButtonDown="imgReceiptPrinter_MouseLeftButtonDown" />
+                    <image:FullPagePrinter x:Name="imgFullPagePrinter" Margin="8" MouseLeftButtonDown="imgFullPagePrinter_MouseLeftButtonDown" />
+                </StackPanel>
                 <WrapPanel>
                     <WrapPanel.Resources>
                         <Style TargetType="StackPanel">

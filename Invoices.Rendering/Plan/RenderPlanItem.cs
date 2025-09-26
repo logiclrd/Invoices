@@ -44,13 +44,22 @@ public class RenderPlanItem
 		return this;
 	}
 
+	public void AddGridRow(RenderGridParameters parameters, params RenderPlanItem[] cells)
+	{
+		var row = GridRow(parameters);
+
+		row.AddItems(cells);
+
+		AddItem(row);
+	}
+
 	public static RenderPlanItem Text(RenderPlanValueType type, string text) => new RenderPlanItem(new RenderPlanValue(type, text));
 
 	public static RenderPlanItem Text(string text) => Text(RenderPlanValueType.Text, text);
 	public static RenderPlanItem BoldText(string text) => Text(RenderPlanValueType.BoldText, text);
 	public static RenderPlanItem TitleText(string text) => Text(RenderPlanValueType.TitleText, text);
 
-	public static RenderPlanItem Image(string path) => new RenderPlanItem(RenderPlanValue.Image(path));
+	public static RenderPlanItem Image(string path, double? maxHeight = null) => new RenderPlanItem(RenderPlanValue.Image(path, maxHeight));
 
 	public static RenderPlanItem Stack(params RenderPlanItem[] items) => new RenderPlanItem(RenderPlanItemType.Stack).AddItems(items);
 

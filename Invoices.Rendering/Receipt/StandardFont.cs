@@ -7,7 +7,6 @@ public class StandardFont : RenderFont
 	public StandardFont()
 		: base("Roboto Mono")
 	{
-
 	}
 
 	public override int LineCharacterWidth => 45;

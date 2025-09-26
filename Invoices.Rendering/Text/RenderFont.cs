@@ -12,7 +12,7 @@ public abstract class RenderFont
 		FontFamilyName = fontFamilyName;
 	}
 
-	static FontFamily? s_font;
+	FontFamily? s_font;
 
 	public FontFamily Font => s_font ??= new FontFamily(FontFamilyName);
 
@@ -20,9 +20,9 @@ public abstract class RenderFont
 	public abstract int LineCharacterWidth { get; }
 	public abstract double FontSize { get; }
 
-	static RenderTypeface? s_typeface;
-	static RenderTypeface? s_typefaceBold;
-	static RenderTypeface? s_typefaceTitle;
+	RenderTypeface? s_typeface;
+	RenderTypeface? s_typefaceBold;
+	RenderTypeface? s_typefaceTitle;
 
 	public RenderTypeface Typeface => s_typeface ??= new RenderTypeface(this, new Typeface(Font, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal));
 	public RenderTypeface TypefaceBold => s_typefaceBold ??= new RenderTypeface(this, new Typeface(Font, FontStyles.Normal, FontWeights.Bold, FontStretches.Normal));

@@ -12,5 +12,5 @@ public class StandardFont : RenderFont
 	public static readonly StandardFont SingletonInstance = new StandardFont();
 
 	public override int LineCharacterWidth => -1; /* not fixed-width */
-	public override double FontSize => 16;
+	public override double FontSize => 32;
 }

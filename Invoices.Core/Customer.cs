@@ -35,48 +35,50 @@ public class Customer
 		}
 	}
 
+	public IEnumerable<string> LongSummaryLines
+	{
+		get
+		{
+			foreach (string name in Name)
+				yield return name;
+
+			bool needSeparator = false;
+
+			if (Address.Any())
+			{
+				foreach (string addressLine in Address)
+					yield return addressLine;
+				needSeparator = true;
+			}
+
+			if (EmailAddresses.Any())
+			{
+				if (needSeparator)
+					yield return "";
+				foreach (string emailAddress in EmailAddresses)
+					yield return emailAddress;
+				needSeparator = true;
+			}
+
+			if (PhoneNumbers.Any())
+			{
+				if (needSeparator)
+					yield return "";
+				foreach (string phoneNumber in PhoneNumbers)
+					yield return phoneNumber;
+				needSeparator = true;
+			}
+		}
+	}
+
 	public string LongSummary
 	{
 		get
 		{
 			var result = new StringBuilder();
 
-			foreach (string name in Name)
-				result.AppendLine(name);
-
-			int finalLength = result.Length;
-
-			if (Address.Any())
-			{
-				foreach (string addressLine in Address)
-					result.AppendLine(addressLine);
-
-				finalLength = result.Length;
-
-				result.AppendLine();
-			}
-
-			if (EmailAddresses.Any())
-			{
-				foreach (string emailAddress in EmailAddresses)
-					result.AppendLine(emailAddress);
-
-				finalLength = result.Length;
-
-				result.AppendLine();
-			}
-
-			if (PhoneNumbers.Any())
-			{
-				foreach (string phoneNumber in PhoneNumbers)
-					result.AppendLine(phoneNumber);
-
-				finalLength = result.Length;
-
-				result.AppendLine();
-			}
-
-			result.Length = finalLength;
+			foreach (var line in LongSummaryLines)
+				result.AppendLine(line);
 
 			return result.ToString();
 		}

@@ -1,30 +1,69 @@
 using System;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
+
+using Invoices.Core;
+
+using Invoices.Rendering;
+
+using Invoices.Utility;
 
 namespace Invoices.Interface;
 
-using Invoices.Core;
-using Invoices.Rendering.Receipt;
-using Invoices.Utility;
-
 public partial class PrintPreview : Window
 {
-	public PrintPreview()
+	InvoiceRenderer _renderer;
+
+	public PrintPreview(InvoiceRenderer renderer)
 	{
 		InitializeComponent();
+
+		_renderer = renderer;
+
+		imgPreview.Margin = new Thickness(renderer.DisplayMargin);
 	}
 
 	BitmapSource? _renderedInvoice;
 
 	public void LoadInvoice(Invoice invoice)
 	{
-		var renderer = new ReceiptInvoiceRenderer();
-
-		_renderedInvoice = renderer.RenderImage(invoice);
+		_renderedInvoice = _renderer.RenderImage(invoice);
 
 		imgPreview.Source = _renderedInvoice;
+	}
+
+	void UpdateScale()
+	{
+		if (_renderedInvoice == null)
+			return;
+
+		double actualWidth = imgPreview.Margin.Left + _renderedInvoice.PixelWidth + imgPreview.Margin.Right;
+		double viewportWidth = svPresentation.ViewportWidth;
+
+		if (viewportWidth <= 0)
+			return;
+
+		if (actualWidth <= viewportWidth)
+			ccScale.LayoutTransform = null;
+		else
+		{
+			double scale = viewportWidth / actualWidth;
+
+			ccScale.LayoutTransform = new ScaleTransform(scale, scale);
+		}
+	}
+
+	protected override void OnContentRendered(EventArgs e)
+	{
+		UpdateScale();
+	}
+
+	protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
+	{
+		Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, UpdateScale);
 	}
 
 	bool _dragging = false;

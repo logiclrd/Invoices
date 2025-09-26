@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Media;
 
 namespace Invoices.Rendering.Plan;
 
@@ -22,6 +23,14 @@ public class RenderGridParameters
 			return Columns[columnIndex].PixelWidth * targetPixelWidth / PixelWidth;
 		else
 			return 0;
+	}
+
+	public AlignmentX GetColumnAlignment(int columnIndex)
+	{
+		if ((columnIndex >= 0) && (columnIndex < Columns.Count))
+			return Columns[columnIndex].Alignment;
+		else
+			return AlignmentX.Left;
 	}
 
 	public RenderFont? GetColumnFont(int columnIndex)
@@ -73,7 +82,7 @@ public class RenderGridParameters
 			if (width > remainingPixelWidth)
 				width = remainingPixelWidth;
 
-			ret.Columns.Add(RenderGridColumn.ForWidth(width));
+			ret.Columns[i].PixelWidth = width;
 
 			remainingPixelWidth -= width;
 		}
