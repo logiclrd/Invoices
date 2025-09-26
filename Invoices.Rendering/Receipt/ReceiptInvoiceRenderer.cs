@@ -1,10 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace Invoices.Rendering.Receipt;
 
@@ -17,55 +12,29 @@ public class ReceiptInvoiceRenderer : InvoiceRenderer
 	const int DPI = 203;
 	const int WidthMM = 72;
 
-	public override BitmapSource RenderImage(Invoice invoice)
-	{
-		Console.WriteLine("Creating plan");
-
-		var plan = CreatePlan(invoice);
-
-		Console.WriteLine("Plan has {0} elements", plan.Items.Count);
-
-		int pixelWidth = (int)Math.Ceiling(WidthMM * DPI / 25.4);
-
-		Console.WriteLine("Pixel width is: {0}", pixelWidth);
-
-		int pixelHeight = plan.MeasureHeight(pixelWidth);
-
-		Console.WriteLine("Measured pixel height is: {0}", pixelHeight);
-		Console.WriteLine("Constructing Visual...");
-
-		var visual = ConstructVisual(plan, pixelWidth);
-
-		Console.WriteLine("Rendering Visual of size {0}x{1}", pixelWidth, pixelHeight);
-
-		var bitmap = new RenderTargetBitmap(pixelWidth, pixelHeight, 96, 96, PixelFormats.Pbgra32);
-
-		visual.Measure(new Size(pixelWidth, pixelHeight));
-		visual.Arrange(new Rect(0, 0, pixelWidth, pixelHeight));
-
-		bitmap.Render(visual);
-
-		return bitmap;
-	}
+	protected override int PixelWidth => (int)Math.Ceiling(WidthMM * DPI / 25.4);
+	protected override int MarginPixels => 0;
 
 	public override RenderPlan CreatePlan(Invoice invoice)
 	{
-		var plan = new RenderPlan();
+		var plan = new RenderPlan(StandardFont.SingletonInstance);
 
-		plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Image, Assets.GetPath("Logo elements receipt.png")));
+		// TODO: fix up
+
+		plan.AddItem(RenderPlanValue.Image(Assets.GetPath("Logo elements receipt.png")));
 
 		string invoiceNumber = "Invoice #" + invoice.InvoiceNumber;
 		string invoiceDate = invoice.InvoiceDateUTC.ToString("yyyy-MM-dd");
-		int spaces = StandardFont.LineCharacterWidth - invoiceNumber.Length - invoiceDate.Length;
+		int spaces = plan.DefaultFont.LineCharacterWidth - invoiceNumber.Length - invoiceDate.Length;
 
-		plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, invoiceNumber + new string(' ', spaces) + invoiceDate));
-		plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, ""));
+		plan.AddItem(RenderPlanValue.Text(invoiceNumber + new string(' ', spaces) + invoiceDate));
+		plan.AddItem(RenderPlanValue.Text(""));
 
 		if ((invoice.DueDateUTC is DateTime dueDateUTC)
 		 && (dueDateUTC != DateTime.MinValue))
 		{
-			plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, "Due: " + dueDateUTC.ToLocalTime().ToString("yyyy-MM-dd")));
-			plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, ""));
+			plan.AddItem(RenderPlanValue.Text("Due: " + dueDateUTC.ToLocalTime().ToString("yyyy-MM-dd")));
+			plan.AddItem(RenderPlanValue.Text(""));
 		}
 
 		int ColumnWidth_Description = 21;
@@ -95,7 +64,7 @@ public class ReceiptInvoiceRenderer : InvoiceRenderer
 			ColumnWidth_Qty += delta;
 		}
 
-		plan.Items.Add(new RenderPlanItem(RenderPlanItemType.BoldText,
+		plan.AddItem(RenderPlanValue.BoldText(
 			"Description".PadRight(ColumnWidth_Description) +
 			"Qty".PadRight(ColumnWidth_Qty) +
 			"Price".PadRight(ColumnWidth_Price) +
@@ -116,17 +85,17 @@ public class ReceiptInvoiceRenderer : InvoiceRenderer
 
 			subtotalSum += subtotal;
 
-			plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text,
+			plan.AddItem(RenderPlanValue.Text(
 				descriptionFirstLine.PadRight(ColumnWidth_Description) +
 				qtyText.PadLeft(ColumnWidth_Qty) +
 				priceText.PadLeft(ColumnWidth_Price) +
 				subtotalText.PadLeft(ColumnWidth_Subtotal)));
 
 			foreach (var descriptionNextLine in descriptionLines.Skip(1))
-				plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, descriptionNextLine));
+				plan.AddItem(RenderPlanValue.Text(descriptionNextLine));
 		}
 
-		plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, ""));
+		plan.AddItem(RenderPlanValue.Text(""));
 
 		string summaryIndent = new string(' ', 19);
 
@@ -134,20 +103,20 @@ public class ReceiptInvoiceRenderer : InvoiceRenderer
 
 		var total = subtotalSum;
 
-		int summaryColumnsWidth = StandardFont.LineCharacterWidth - summaryIndent.Length;
+		int summaryColumnsWidth = plan.DefaultFont.LineCharacterWidth - summaryIndent.Length;
 
-		plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, summaryIndent + "Subtotal".PadRight(summaryColumnsWidth - subtotalSumText.Length) + subtotalSumText));
+		plan.AddItem(RenderPlanValue.Text(summaryIndent + "Subtotal".PadRight(summaryColumnsWidth - subtotalSumText.Length) + subtotalSumText));
 
 		if (invoice.Taxes.Any())
 		{
-			plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, ""));
+			plan.AddItem(RenderPlanValue.Text(""));
 
 			foreach (var tax in invoice.Taxes)
 			{
 				decimal taxAmount = Math.Round(subtotalSum * tax.TaxRate, 2);
 				string taxAmountText = taxAmount.ToString("$#,##0.00");
 
-				plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, summaryIndent + $"Tax ({tax.TaxName})".PadRight(summaryColumnsWidth - taxAmountText.Length) + taxAmountText));
+				plan.AddItem(RenderPlanValue.Text(summaryIndent + $"Tax ({tax.TaxName})".PadRight(summaryColumnsWidth - taxAmountText.Length) + taxAmountText));
 
 				total += taxAmount;
 			}
@@ -155,16 +124,16 @@ public class ReceiptInvoiceRenderer : InvoiceRenderer
 
 		string totalText = total.ToString("$#,##0.00");
 
-		plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, ""));
-		plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, summaryIndent + "Total".PadRight(summaryColumnsWidth - totalText.Length) + totalText));
+		plan.AddItem(RenderPlanValue.Text(""));
+		plan.AddItem(RenderPlanValue.Text(summaryIndent + "Total".PadRight(summaryColumnsWidth - totalText.Length) + totalText));
 
 		if (invoice.Payments.Any())
 		{
-			plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, ""));
+			plan.AddItem(RenderPlanValue.Text(""));
 
 			decimal remaining = total;
 
-			int characters = StandardFont.LineCharacterWidth - summaryIndent.Length;
+			int characters = plan.DefaultFont.LineCharacterWidth - summaryIndent.Length;
 
 			foreach (var payment in invoice.Payments)
 			{
@@ -173,7 +142,7 @@ public class ReceiptInvoiceRenderer : InvoiceRenderer
 
 				spaces = characters - header.Length - amountText.Length;
 
-				plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, summaryIndent + header + new string(' ', spaces) + amountText));
+				plan.AddItem(RenderPlanValue.Text(summaryIndent + header + new string(' ', spaces) + amountText));
 
 				if (payment.ReceivedDateTimeUTC.HasValue)
 				{
@@ -186,7 +155,7 @@ public class ReceiptInvoiceRenderer : InvoiceRenderer
 
 					string receivedDateTimeText = payment.ReceivedDateTimeUTC.Value.ToLocalTime().ToString(formatString);
 
-					plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, summaryIndent + receivedDateTimeText));
+					plan.AddItem(RenderPlanValue.Text(summaryIndent + receivedDateTimeText));
 				}
 
 				remaining -= payment.Amount;
@@ -194,26 +163,26 @@ public class ReceiptInvoiceRenderer : InvoiceRenderer
 
 			if (remaining != 0)
 			{
-				plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, ""));
+				plan.AddItem(RenderPlanValue.Text(""));
 
 				string header = (remaining > 0) ? "Remaining:" : "Balance:";
 				string amountText = remaining.ToString("$#,##0.00;($#,##0.00)");
 
 				spaces = characters - header.Length - amountText.Length;
 
-				plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, summaryIndent + header + new string(' ', spaces) + amountText));
+				plan.AddItem(RenderPlanValue.Text(summaryIndent + header + new string(' ', spaces) + amountText));
 			}
 		}
 
 		if (invoice.Notes.Any())
 		{
-			plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, ""));
+			plan.AddItem(RenderPlanValue.Text(""));
 
 			foreach (string note in invoice.Notes)
 			{
 				if (string.IsNullOrWhiteSpace(note))
 				{
-					plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, ""));
+					plan.AddItem(RenderPlanValue.Text(""));
 					continue;
 				}
 
@@ -226,75 +195,14 @@ public class ReceiptInvoiceRenderer : InvoiceRenderer
 				string noteText = note.Substring(indentWidth);
 
 				foreach (string noteLine in StringUtility.WordWrap(noteText, 45 - indent.Length))
-					plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, indent + noteLine));
+					plan.AddItem(RenderPlanValue.Text(indent + noteLine));
 			}
 		}
 
-		plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, ""));
-		plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Text, ""));
-		plan.Items.Add(new RenderPlanItem(RenderPlanItemType.Image, Assets.GetPath("White line.png")));
+		plan.AddItem(RenderPlanValue.Text(""));
+		plan.AddItem(RenderPlanValue.Text(""));
+		plan.AddItem(RenderPlanValue.Image(Assets.GetPath("White line.png")));
 
 		return plan;
-	}
-
-	public override UIElement ConstructVisual(RenderPlan plan, int pixelWidth)
-	{
-		var panel = new StackPanel();
-
-		panel.Background = Brushes.White;
-		panel.Width = pixelWidth;
-		panel.HorizontalAlignment = HorizontalAlignment.Left;
-		panel.VerticalAlignment = VerticalAlignment.Top;
-
-		double y = 0;
-
-		foreach (var item in plan.Items)
-		{
-			double height = item.MeasureHeight(pixelWidth);
-
-			switch (item.ItemType)
-			{
-				case RenderPlanItemType.Image:
-				{
-					var imageElement = new Image();
-
-					imageElement.Width = pixelWidth;
-					imageElement.Height = height;
-					imageElement.Source = item.LoadedImage ?? ImageLoader.LoadImage(item.Value);
-					imageElement.Stretch = Stretch.Uniform;
-
-					panel.Children.Add(imageElement);
-
-					break;
-				}
-				case RenderPlanItemType.Text:
-				case RenderPlanItemType.BoldText:
-				{
-					foreach (var line in item.FlowText(pixelWidth))
-					{
-						var textElement = new TextBlock();
-
-						textElement.Width = pixelWidth;
-						textElement.Height = StandardFont.LineSpacingPixels;
-						textElement.FontFamily = StandardFont.Font;
-						textElement.Text = line;
-						textElement.FontSize = StandardFont.FontSize;
-
-						if (item.ItemType == RenderPlanItemType.BoldText)
-							textElement.FontWeight = FontWeights.Bold;
-
-						panel.Children.Add(textElement);
-					}
-
-					break;
-				}
-			}
-
-			y += height;
-		}
-
-		panel.Height = y;
-
-		return panel!;
 	}
 }

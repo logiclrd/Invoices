@@ -1,95 +1,90 @@
+using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace Invoices.Rendering.Plan;
 
-using Invoices.Rendering.Receipt;
+using Invoices.Rendering.Text;
 
 public class RenderPlanItem
 {
-	public RenderPlanItemType ItemType;
-	public string Value;
+	public RenderPlan Plan = default!;
+	public RenderPlanItem? Owner;
 
-	public RenderPlanItem(RenderPlanItemType itemType, string value)
+	RenderFont? _localFont;
+
+	public RenderFont Font
 	{
-		ItemType = itemType;
-		Value = value;
+		get => _localFont ?? Owner?.Font ?? Plan.DefaultFont;
+		set => _localFont = value;
 	}
 
-	public BitmapSource? LoadedImage;
+	public RenderPlanItemType ItemType;
+	public RenderPlanValue? Value;
+	public RenderGridParameters? GridParameters;
 
-	public IEnumerable<string> FlowText(int pixelWidth)
+	List<RenderPlanItem> _items = new List<RenderPlanItem>();
+
+	public IReadOnlyList<RenderPlanItem> Items => _items;
+
+	public RenderPlanItem AddItem(RenderPlanItem item)
 	{
-		if (string.IsNullOrWhiteSpace(Value))
-		{
-			yield return "";
-			yield break;
-		}
+		item.Plan = this.Plan;
+		item.Owner = this;
+		_items.Add(item);
 
-		var line = new StringBuilder();
+		return this;
+	}
 
-		string lastAcceptedString = "";
+	public RenderPlanItem AddItems(IEnumerable<RenderPlanItem> items)
+	{
+		foreach (var item in items)
+			AddItem(item);
 
-		for (int i = 0; i < Value.Length; i++)
-		{
-			if (!char.IsWhiteSpace(Value, i))
-				line.Append(Value[i]);
-			else
-			{
-				string newTestString = line.ToString().TrimEnd();
+		return this;
+	}
 
-				line.Append(' ');
+	public static RenderPlanItem Text(RenderPlanValueType type, string text) => new RenderPlanItem(new RenderPlanValue(type, text));
 
-				if (newTestString != lastAcceptedString)
-				{
-					var formatted = new FormattedText(
-						newTestString,
-						CultureInfo.CurrentCulture,
-						FlowDirection.LeftToRight,
-						(ItemType == RenderPlanItemType.BoldText) ? StandardFont.TypefaceBold : StandardFont.Typeface,
-						StandardFont.FontSize,
-						Brushes.Black,
-						pixelsPerDip: 1);
+	public static RenderPlanItem Text(string text) => Text(RenderPlanValueType.Text, text);
+	public static RenderPlanItem BoldText(string text) => Text(RenderPlanValueType.BoldText, text);
+	public static RenderPlanItem TitleText(string text) => Text(RenderPlanValueType.TitleText, text);
 
-					if (formatted.Width <= pixelWidth)
-						lastAcceptedString = newTestString;
-					else
-					{
-						yield return lastAcceptedString;
+	public static RenderPlanItem Image(string path) => new RenderPlanItem(RenderPlanValue.Image(path));
 
-						line.Remove(0, lastAcceptedString.Length);
-						while ((line.Length > 0) && char.IsWhiteSpace(line[0]))
-							line.Remove(0, 1);
+	public static RenderPlanItem Stack(params RenderPlanItem[] items) => new RenderPlanItem(RenderPlanItemType.Stack).AddItems(items);
 
-						lastAcceptedString = "";
-					}
-				}
-			}
-		}
+	public static RenderPlanItem GridRow(RenderGridParameters parameters) => new RenderPlanItem(RenderPlanItemType.GridRow) { GridParameters = parameters };
 
-		lastAcceptedString = line.ToString();
+	public RenderPlanItem(RenderPlanItemType itemType)
+	{
+		ItemType = itemType;
+	}
 
-		if (!string.IsNullOrWhiteSpace(lastAcceptedString))
-			yield return lastAcceptedString;
+	public RenderPlanItem(RenderPlanValue value)
+	{
+		ItemType = RenderPlanItemType.Value;
+		Value = value;
 	}
 
 	public double MeasureHeight(int pixelWidth)
 	{
+		if (pixelWidth == 0)
+			return 0;
+
 		switch (ItemType)
 		{
-			case RenderPlanItemType.Image:
-				if (LoadedImage == null)
-					LoadedImage = ImageLoader.LoadImage(Value);
+			case RenderPlanItemType.Value:
+				return Value?.MeasureHeight(pixelWidth, Font) ?? 0;
+			case RenderPlanItemType.Stack:
+				return Items
+					.Select(item => item.MeasureHeight(pixelWidth))
+					.Sum();
+			case RenderPlanItemType.GridRow:
+				return Items
+					.Select((item, columnIndex) => item.MeasureHeight(GridParameters!.GetColumnPixelWidth(columnIndex, pixelWidth)))
+					.Max();
 
-				return LoadedImage.PixelHeight * pixelWidth / LoadedImage.PixelWidth;
-			case RenderPlanItemType.Text:
-			case RenderPlanItemType.BoldText:
-				return FlowText(pixelWidth).Count() * StandardFont.LineSpacingPixels;
 			default:
 				return 0;
 		}
