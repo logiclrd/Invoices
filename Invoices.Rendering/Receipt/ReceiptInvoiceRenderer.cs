@@ -10,10 +10,17 @@ using Invoices.Rendering.Utility;
 
 public class ReceiptInvoiceRenderer : InvoiceRenderer
 {
-	const int DPI = 203;
+	public override string Title => "Receipt";
+
+	public override string DefaultPrintQueueName => "POS-80C";
+
 	const int WidthMM = 72;
 
+	public override int DPI => 203;
+
 	public override double DisplayMargin => 30;
+
+	public override bool IsContinuous => true;
 
 	protected override int PagePixelWidth => (int)Math.Ceiling(WidthMM * DPI / 25.4);
 	protected override int PagePixelHeight => 0;

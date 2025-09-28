@@ -17,7 +17,7 @@ public class BindingListEx<T> : BindingList<T>
 	{
 	}
 
-  protected override void RemoveItem(int index)
+	protected override void RemoveItem(int index)
 	{
 		ItemRemoved?.Invoke(this, this[index]);
 

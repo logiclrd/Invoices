@@ -12,6 +12,18 @@
     <ProjectReference Include="..\Invoices.Integration.Square\Invoices.Integration.Square.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <!--<PackageReference Include="PrintDialogX" Version="2.1.6" /> -->
+    <Reference Include="PrintDialogX">
+      <HintPath>C:\code\PrintDialogX\PrintDialogX\bin\Debug\net6.0-windows\PrintDialogX.dll</HintPath>
+    </Reference>
+    <Reference Include="Wpf.Ui">
+      <HintPath>C:\code\PrintDialogX\PrintDialogX\bin\Debug\net472\Wpf.Ui.dll</HintPath>
+    </Reference>
+    <Reference Include="Wpf.Ui.Abstractions">
+      <HintPath>C:\code\PrintDialogX\PrintDialogX\bin\Debug\net472\Wpf.Ui.Abstractions.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
     <Content Include="SquareConfiguration.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

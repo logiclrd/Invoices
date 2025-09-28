@@ -6,9 +6,10 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 
+using Invoices.Core;
+
 namespace Invoices.Interface;
 
-using Invoices.Core;
 using Invoices.Interface.Controls;
 
 public partial class CustomerPicker : Window

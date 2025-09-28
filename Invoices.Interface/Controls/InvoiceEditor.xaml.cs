@@ -14,13 +14,14 @@ using Invoices.Core;
 
 using Invoices.Integration;
 using Invoices.Integration.Square;
-using Invoices.Interface.Utility;
 
 using Invoices.Rendering;
 using Invoices.Rendering.FullPage;
 using Invoices.Rendering.Receipt;
 
 namespace Invoices.Interface.Controls;
+
+using Invoices.Interface.Utility;
 
 public partial class InvoiceEditor : UserControl
 {
@@ -783,12 +784,9 @@ public partial class InvoiceEditor : UserControl
 
 			TransferChangesToModel(invoice);
 
-			var printPreview = new PrintPreview(new TRenderer());
+			var renderer = new TRenderer();
 
-			printPreview.Owner = Window.GetWindow(this);
-			printPreview.LoadInvoice(invoice);
-
-			printPreview.ShowDialog();
+			PrintUtility.Print(FindWindow(), renderer, invoice);
 		}
 	}
 

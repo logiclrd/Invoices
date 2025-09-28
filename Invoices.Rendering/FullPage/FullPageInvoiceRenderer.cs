@@ -1,15 +1,21 @@
 using System;
 using System.Linq;
+using System.Windows;
 using System.Windows.Media;
+
+using Invoices.Core;
 
 namespace Invoices.Rendering.FullPage;
 
-using Invoices.Core;
 using Invoices.Rendering.Plan;
 
 public class FullPageInvoiceRenderer : InvoiceRenderer
 {
-	public const int DPI = 300;
+	public override string Title => "Invoice";
+
+	public override string DefaultPrintQueueName => "Microsoft Print to PDF";
+
+	public override int DPI => 96;
 
 	public const double PageWidth = 8.5;
 	public const double PageHeight = 11;
@@ -18,14 +24,18 @@ public class FullPageInvoiceRenderer : InvoiceRenderer
 
 	public override double DisplayMargin => 0;
 
+	public override Size PageSizeInches => new Size(PageWidth, PageHeight);
+
+	public override bool IsContinuous => false;
+
 	protected override int PagePixelWidth => (int)(PageWidth * DPI);
 	protected override int PagePixelHeight => (int)(PageHeight * DPI);
 	protected override int MarginPixels => (int)(Margin * DPI);
 
-	public readonly int ContentPixelWidth = (int)Math.Ceiling((PageWidth - 2 * Margin) * DPI);
-	public readonly int ContentPixelHeight = (int)Math.Ceiling((PageHeight - 2 * Margin) * DPI);
+	public int ContentPixelWidth => (int)Math.Ceiling((PageWidth - 2 * Margin) * DPI);
+	public int ContentPixelHeight => (int)Math.Ceiling((PageHeight - 2 * Margin) * DPI);
 
-	public const double LogoImageHeightInches = 2;
+	public const double LogoImageHeightInches = 2.2;
 
 	public override RenderPlan CreatePlan(Invoice invoice)
 	{
@@ -47,6 +57,7 @@ public class FullPageInvoiceRenderer : InvoiceRenderer
 		var logoImage = RenderPlanItem.Image(Assets.GetPath("Logo elements coloured.png"), maxHeight: LogoImageHeightInches * DPI);
 
 		var invoiceInfoStack = RenderPlanItem.Stack(
+			RenderPlanItem.TitleText(""),
 			RenderPlanItem.TitleText("Invoice #" + invoice.InvoiceNumber),
 			RenderPlanItem.Text(invoice.InvoiceDateUTC.ToLocalTime().ToString("yyyy-MM-dd")));
 

@@ -16,11 +16,19 @@ using Invoices.Rendering.Utility;
 
 public abstract class InvoiceRenderer
 {
+	public abstract string Title { get; }
+
+	public abstract string DefaultPrintQueueName { get; }
+
 	public abstract double DisplayMargin { get; }
 
 	protected abstract int PagePixelWidth { get; }
 	protected abstract int PagePixelHeight { get; }
 	protected abstract int MarginPixels { get; }
+
+	public abstract int DPI { get; }
+	public virtual Size PageSizeInches => new Size(PagePixelWidth / (double)DPI, PagePixelHeight / (double)DPI);
+	public abstract bool IsContinuous { get; }
 
 	public abstract RenderPlan CreatePlan(Invoice invoice);
 
@@ -55,7 +63,7 @@ public abstract class InvoiceRenderer
 		return bitmap;
 	}
 
-	public IEnumerable<BitmapSource> RenderPages(Invoice invoice)
+	public IEnumerable<FrameworkElement> RenderPages(Invoice invoice)
 	{
 		Console.WriteLine("Creating plan");
 
@@ -66,19 +74,22 @@ public abstract class InvoiceRenderer
 		int pixelWidth = PagePixelWidth;
 		int pixelHeight = PagePixelHeight;
 
+		if (pixelHeight == 0)
+			pixelHeight = plan.MeasureHeight(pixelWidth) + 2 * MarginPixels;
+
 		Console.WriteLine("Pixel width is: {0}", pixelWidth);
 		Console.WriteLine("Pixel height is: {0}", pixelHeight);
 
-		int pageNumber = 1;
+		int pageCount = 0;
 		int itemIndex = 0;
+
+		Console.WriteLine("Counting Pages...");
 
 		while (itemIndex < invoice.Items.Count)
 		{
-			Console.WriteLine("[Page " + pageNumber + "] Constructing Visual...");
-
 			int pageStartItemIndex = itemIndex;
 
-			var visual = ConstructVisual(plan, ref itemIndex, pageNumber, pixelHeight);
+			var visual = ConstructVisual(plan, ref itemIndex, pageCount + 1, pageCount + 1, pixelHeight, dryRun: true);
 
 			if (itemIndex == pageStartItemIndex)
 			{
@@ -87,45 +98,93 @@ public abstract class InvoiceRenderer
 				continue;
 			}
 
-			Console.WriteLine("Rendering Visual of size {0}x{1}", pixelWidth, pixelHeight);
+			pageCount++;
+		}
 
-			var bitmap = new RenderTargetBitmap(pixelWidth, pixelHeight, 96, 96, PixelFormats.Pbgra32);
+		int pageNumber = 1;
 
-			visual.Measure(new Size(pixelWidth, pixelHeight));
-			visual.Arrange(new Rect(0, 0, pixelWidth, pixelHeight));
+		itemIndex = 0;
 
-			bitmap.Render(visual);
+		while (itemIndex < invoice.Items.Count)
+		{
+			Console.WriteLine("[Page " + pageNumber + "] Constructing Visual...");
 
-			yield return bitmap;
+			int pageStartItemIndex = itemIndex;
+
+			var visual = ConstructVisual(plan, ref itemIndex, pageNumber, pageCount, pixelHeight) ?? throw new Exception("Internal error: ConstructVisual returned null");
+
+			if (itemIndex == pageStartItemIndex)
+			{
+				// Couldn't fit even one item on the page?
+				itemIndex++;
+				continue;
+			}
+
+			yield return visual;
 
 			pageNumber++;
 		}
 	}
 
-	public UIElement ConstructVisual(RenderPlan plan)
+	public FrameworkElement ConstructVisual(RenderPlan plan)
 	{
 		int itemIndex = 0;
 
-		return ConstructVisual(plan, ref itemIndex, pageNumber: 1, pagePixelHeight: int.MaxValue);
+		return ConstructVisual(plan, ref itemIndex, pageNumber: 1, pageCount: 1, pagePixelHeight: InfinitePageHeight) ?? throw new Exception("Internal error: ConstructVisual returned null");
 	}
 
-	public UIElement ConstructVisual(RenderPlan plan, ref int itemIndex, int pageNumber, int pagePixelHeight)
+	const int InfinitePageHeight = int.MaxValue;
+
+	public FrameworkElement? ConstructVisual(RenderPlan plan, ref int itemIndex, int pageNumber, int pageCount, int pagePixelHeight, bool dryRun = false)
 	{
 		int contentPixelWidth = PagePixelWidth - 2 * MarginPixels;
+		int contentPixelHeight = pagePixelHeight - 2 * MarginPixels;
 
-		var panel = new StackPanel();
+		Canvas? page = null;
+		StackPanel? panel = null;
 
-		panel.Background = Brushes.White;
-		panel.Width = contentPixelWidth;
-		panel.HorizontalAlignment = HorizontalAlignment.Left;
-		panel.VerticalAlignment = VerticalAlignment.Top;
-		panel.Margin = new Thickness(MarginPixels);
+		if (!dryRun)
+		{
+			page = new Canvas();
+
+			panel = new StackPanel();
+
+			panel.Background = Brushes.White;
+			panel.Width = contentPixelWidth;
+			panel.HorizontalAlignment = HorizontalAlignment.Left;
+			panel.VerticalAlignment = VerticalAlignment.Top;
+
+			Canvas.SetLeft(panel, MarginPixels);
+			Canvas.SetTop(panel, MarginPixels);
+
+			page.Children.Add(panel);
+
+			if (pagePixelHeight != InfinitePageHeight)
+			{
+				var pageNumberVisual = new TextBlock();
+
+				pageNumberVisual.Text = pageNumber + " / " + pageCount;
+				pageNumberVisual.FontFamily = plan.DefaultFont.Font;
+				pageNumberVisual.FontSize = plan.DefaultFont.FontSize * 0.8;
+				pageNumberVisual.Foreground = Brushes.DarkSlateGray;
+
+				pageNumberVisual.Measure(new Size(PagePixelWidth, pagePixelHeight));
+
+				Canvas.SetLeft(pageNumberVisual, (PagePixelWidth - pageNumberVisual.DesiredSize.Width) / 2);
+				Canvas.SetTop(pageNumberVisual, pagePixelHeight - MarginPixels / 2 - pageNumberVisual.DesiredSize.Height);
+
+				page.Children.Add(pageNumberVisual);
+			}
+		}
 
 		double y = 0;
 
 		foreach (var item in plan.Header.Items)
 		{
-			panel.Children.Add(ConstructVisual(item, contentPixelWidth, out var height));
+			var visual = ConstructVisual(item, contentPixelWidth, out var height, dryRun);
+
+			if (visual != null)
+				panel!.Children.Add(visual);
 
 			y += height;
 		}
@@ -134,27 +193,36 @@ public abstract class InvoiceRenderer
 		{
 			var item = plan.Body.Items[itemIndex];
 
-			var visual = ConstructVisual(item, contentPixelWidth, out var height);
+			var visual = ConstructVisual(item, contentPixelWidth, out var height, dryRun);
 
-			if (y + height > pagePixelHeight)
+			if (y + height > contentPixelHeight)
 				break;
 
-			panel.Children.Add(visual);
+			if (visual != null)
+				panel!.Children.Add(visual);
 
 			y += height;
 			itemIndex++;
 		}
 
-		if (pagePixelHeight == int.MaxValue)
-			panel.Height = y;
-		else
-			panel.Height = pagePixelHeight;
+		if (!dryRun)
+		{
+			if (pagePixelHeight == InfinitePageHeight)
+				panel!.Height = y;
+			else
+				panel!.Height = contentPixelHeight;
 
-		return panel!;
+			page!.Width = PagePixelWidth;
+			page.Height = panel.Height + 2 * MarginPixels;
+		}
+
+		return page;
 	}
 
-	FrameworkElement ConstructVisual(RenderPlanItem item, int pixelWidth, out double height)
+	FrameworkElement? ConstructVisual(RenderPlanItem item, int pixelWidth, out double height, bool dryRun)
 	{
+		height = 0;
+
 		switch (item.ItemType)
 		{
 			case RenderPlanItemType.Value:
@@ -163,7 +231,7 @@ public abstract class InvoiceRenderer
 
 				var value = item.Value;
 
-				if (value == null)
+				if ((value == null) || dryRun)
 					break;
 
 				switch (value.Type)
@@ -219,13 +287,19 @@ public abstract class InvoiceRenderer
 			}
 			case RenderPlanItemType.Stack:
 			{
-				var stack = new StackPanel();
+				StackPanel? stack = null;
+
+				if (!dryRun)
+					stack = new StackPanel();
 
 				height = 0;
 
 				foreach (var subItem in item.Items)
 				{
-					stack.Children.Add(ConstructVisual(subItem, pixelWidth, out var subItemHeight));
+					var subItemVisual = ConstructVisual(subItem, pixelWidth, out var subItemHeight, dryRun);
+
+					if (subItemVisual != null)
+						stack!.Children.Add(subItemVisual);
 
 					height += subItemHeight;
 				}
@@ -234,7 +308,10 @@ public abstract class InvoiceRenderer
 			}
 			case RenderPlanItemType.GridRow:
 			{
-				var grid = new Grid();
+				Grid? grid = null;
+
+				if (!dryRun)
+					grid = new Grid();
 
 				height = 0;
 
@@ -244,31 +321,35 @@ public abstract class InvoiceRenderer
 
 					int subPixelWidth = item.GridParameters?.GetColumnPixelWidth(columnIndex, pixelWidth) ?? (pixelWidth / item.Items.Count);
 
-					var subItemVisual = ConstructVisual(subItem, subPixelWidth, out var subItemHeight);
+					var subItemVisual = ConstructVisual(subItem, subPixelWidth, out var subItemHeight, dryRun);
 
-					grid.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(subPixelWidth) });
-					grid.Children.Add(subItemVisual);
-
-					switch (item.GridParameters?.GetColumnAlignment(columnIndex))
+					if (subItemVisual != null)
 					{
-						case AlignmentX.Center: subItemVisual.HorizontalAlignment = HorizontalAlignment.Center; break;
-						case AlignmentX.Right: subItemVisual.HorizontalAlignment = HorizontalAlignment.Right; break;
-					}
+						grid!.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(subPixelWidth) });
+						grid.Children.Add(subItemVisual);
 
-					Grid.SetColumn(subItemVisual, columnIndex);
+						switch (item.GridParameters?.GetColumnAlignment(columnIndex))
+						{
+							case AlignmentX.Center: subItemVisual.HorizontalAlignment = HorizontalAlignment.Center; break;
+							case AlignmentX.Right: subItemVisual.HorizontalAlignment = HorizontalAlignment.Right; break;
+						}
+
+						Grid.SetColumn(subItemVisual, columnIndex);
+					}
 
 					height = Math.Max(height, subItemHeight);
 				}
 
-				grid.Width = pixelWidth;
-				grid.Height = height;
+				if (grid != null)
+				{
+					grid.Width = pixelWidth;
+					grid.Height = height;
+				}
 
 				return grid;
 			}
 		}
 
-		// ??
-		height = 0;
-		return new FrameworkElement();
+		return null;
 	}
 }

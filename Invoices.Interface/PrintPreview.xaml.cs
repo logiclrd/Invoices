@@ -9,9 +9,9 @@ using Invoices.Core;
 
 using Invoices.Rendering;
 
-using Invoices.Utility;
-
 namespace Invoices.Interface;
+
+using Invoices.Interface.Utility;
 
 public partial class PrintPreview : Window
 {
@@ -104,7 +104,7 @@ public partial class PrintPreview : Window
 	void cmdPrint_Click(object? sender, RoutedEventArgs e)
 	{
 		if (_renderedInvoice != null)
-			PrintUtility.Print(_renderedInvoice);
+			PrintUtility.Print(_renderer, _renderedInvoice);
 	}
 
 	void cmdClose_Click(object? sender, RoutedEventArgs e)
