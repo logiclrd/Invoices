@@ -61,7 +61,7 @@ public class FullPageInvoiceRenderer : InvoiceRenderer
 		var invoiceInfoStack = RenderPlanItem.Stack(
 			RenderPlanItem.TitleText(""),
 			RenderPlanItem.TitleText("Invoice #" + invoice.InvoiceNumber),
-			RenderPlanItem.Text(invoice.InvoiceDateUTC.ToLocalTime().ToString("yyyy-MM-dd")));
+			RenderPlanItem.Text(invoice.InvoiceDateUTC.ToString("yyyy-MM-dd")));
 
 		if (invoice.InvoiceeCustomer is Customer customer)
 		{
