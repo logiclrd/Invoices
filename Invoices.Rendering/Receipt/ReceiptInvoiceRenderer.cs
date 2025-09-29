@@ -30,6 +30,8 @@ public class ReceiptInvoiceRenderer : InvoiceRenderer
 	{
 		var plan = new RenderPlan(StandardFont.SingletonInstance);
 
+		plan.DocumentName = "Receipt #" + invoice.InvoiceNumber;
+
 		var body = plan.Body;
 
 		body.AddItem(RenderPlanValue.Image(Assets.GetPath("Logo elements receipt.png")));

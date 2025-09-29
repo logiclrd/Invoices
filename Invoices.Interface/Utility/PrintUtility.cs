@@ -30,9 +30,9 @@ public class PrintUtility
 
 			var printQueue = printServer.GetPrintQueues().FirstOrDefault(queue => queue.Name == renderer.DefaultPrintQueueName);
 
-			var pages = renderer.RenderPages(invoice).ToArray();
+			var document = renderer.RenderPages(invoice);
 
-			Print(owner, printQueue, renderer.Title, renderer.PageSizeInches, renderer.DPI, pages);
+			Print(owner, printQueue, renderer.Title, renderer.PageSizeInches, renderer.DPI, document);
 		}
 	}
 
@@ -66,18 +66,12 @@ public class PrintUtility
 		}
 	}
 
-	public static void Print(Window owner, PrintQueue? printQueue, string title, Size pageSizeInches, int dpi, BitmapSource image)
+	public static void Print(Window owner, PrintQueue? printQueue, string title, Size pageSizeInches, int dpi, string documentName, BitmapSource image)
 	{
-		var imagePresenter = new Image();
-
-		imagePresenter.Source = image;
-		imagePresenter.HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch;
-		imagePresenter.VerticalAlignment = System.Windows.VerticalAlignment.Top;
-
-		Print(owner, printQueue, title, pageSizeInches, dpi, imagePresenter);
+		Print(owner, printQueue, title, pageSizeInches, dpi, RenderedDocument.FromImage(documentName, image));
 	}
 
-	public static void Print(Window owner, PrintQueue? printQueue, string title, Size pageSizeInches, int dpi, params FrameworkElement[] pages)
+	public static void Print(Window owner, PrintQueue? printQueue, string title, Size pageSizeInches, int dpi, RenderedDocument document)
 	{
 		var printDialogX = new PrintDialogX.PrintDialog.PrintDialog();
 
@@ -98,16 +92,18 @@ public class PrintUtility
 		{
 			var documentX = new PrintDialogX.PrintDocument();
 
-			if ((pageSizeInches.Height == 0) && (pages.Length > 0))
+			documentX.DocumentName = document.DocumentName;
+
+			if ((pageSizeInches.Height == 0) && (document.Pages.Length > 0))
 			{
-				pages[0].Measure(new Size(pageSizeInches.Width * dpi, double.MaxValue));
-				pageSizeInches.Height = pages[0].DesiredSize.Height / dpi;
+				document.Pages[0].Measure(new Size(pageSizeInches.Width * dpi, double.MaxValue));
+				pageSizeInches.Height = document.Pages[0].DesiredSize.Height / dpi;
 			}
 
 			documentX.SetSizeByInch(pageSizeInches.Width, pageSizeInches.Height);
 			documentX.DocumentMargin = 0; // margin is baked into the visual
 
-			foreach (var page in pages)
+			foreach (var page in document.Pages)
 			{
 				var pageX = new PrintDialogX.PrintPage();
 

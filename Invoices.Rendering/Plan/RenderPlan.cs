@@ -6,6 +6,8 @@ using Invoices.Rendering.Text;
 
 public class RenderPlan
 {
+	public string DocumentName = "Invoice";
+
 	public RenderFont DefaultFont;
 
 	public RenderPlanSection Header;

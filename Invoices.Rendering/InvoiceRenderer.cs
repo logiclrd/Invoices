@@ -63,7 +63,7 @@ public abstract class InvoiceRenderer
 		return bitmap;
 	}
 
-	public IEnumerable<FrameworkElement> RenderPages(Invoice invoice)
+	public RenderedDocument RenderPages(Invoice invoice)
 	{
 		Console.WriteLine("Creating plan");
 
@@ -89,7 +89,7 @@ public abstract class InvoiceRenderer
 		{
 			int pageStartItemIndex = itemIndex;
 
-			var visual = ConstructVisual(plan, ref itemIndex, pageCount + 1, pageCount + 1, pixelHeight, dryRun: true);
+			ConstructVisual(plan, ref itemIndex, pageCount + 1, pageCount + 1, pixelHeight, dryRun: true);
 
 			if (itemIndex == pageStartItemIndex)
 			{
@@ -104,6 +104,8 @@ public abstract class InvoiceRenderer
 		int pageNumber = 1;
 
 		itemIndex = 0;
+
+		List<FrameworkElement> pages = new List<FrameworkElement>(pageCount);
 
 		while (itemIndex < invoice.Items.Count)
 		{
@@ -120,10 +122,12 @@ public abstract class InvoiceRenderer
 				continue;
 			}
 
-			yield return visual;
+			pages.Add(visual);
 
 			pageNumber++;
 		}
+
+		return new RenderedDocument(plan.DocumentName, pages.ToArray());
 	}
 
 	public FrameworkElement ConstructVisual(RenderPlan plan)

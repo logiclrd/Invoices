@@ -41,6 +41,8 @@ public class FullPageInvoiceRenderer : InvoiceRenderer
 	{
 		var plan = new RenderPlan(StandardFont.SingletonInstance);
 
+		plan.DocumentName = "Invoice #" + invoice.InvoiceNumber;
+
 		var headingParameters = RenderGridParameters.Create(ContentPixelWidth, -1, ContentPixelWidth * 2 / 5);
 
 		headingParameters.Columns[1].Alignment = AlignmentX.Right;
