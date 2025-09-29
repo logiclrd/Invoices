@@ -153,7 +153,14 @@ public class ReceiptInvoiceRenderer : InvoiceRenderer
 
 				spaces = characters - header.Length - amountText.Length;
 
-				body.AddItem(RenderPlanValue.Text(summaryIndent + header + new string(' ', spaces) + amountText));
+				if (spaces > 0)
+					body.AddItem(RenderPlanValue.Text(summaryIndent + header + new string(' ', spaces) + amountText));
+				else
+				{
+					foreach (string line in StringUtility.WordWrap(header, summaryColumnsWidth))
+						body.AddItem(RenderPlanValue.Text(summaryIndent + line));
+					body.AddItem(RenderPlanValue.Text(amountText.PadLeft(plan.DefaultFont.LineCharacterWidth)));
+				}
 
 				if (payment.ReceivedDateTimeUTC.HasValue)
 				{
