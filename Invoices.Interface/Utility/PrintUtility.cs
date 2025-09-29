@@ -3,6 +3,7 @@ using System.Linq;
 using System.Printing;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 using Invoices.Core;
@@ -14,9 +15,6 @@ public class PrintUtility
 {
 	public static void Print(Window owner, InvoiceRenderer renderer, Invoice invoice)
 	{
-		for (int i = 0; i < 100; i++)
-			invoice.Items.Add(invoice.Items[0]);
-
 		if (renderer.IsContinuous)
 		{
 			var dialog = new PrintPreview(renderer);
@@ -86,9 +84,7 @@ public class PrintUtility
 		printDialogX.Owner = owner;
 		printDialogX.Title = title;
 
-		printDialogX.InitialPrintQueue = printQueue;
-
-		printDialogX.EnableSelection = false;
+		printDialogX.DefaultPrinter = printQueue;
 
 		printDialogX.AllowPagesOption = true; //Allow the "Pages" option (contains "All Pages", "Current Page", and "Custom Pages")
 		printDialogX.AllowPagesPerSheetOption = false; //Allow the "Pages Per Sheet" option
@@ -116,6 +112,8 @@ public class PrintUtility
 				var pageX = new PrintDialogX.PrintPage();
 
 				pageX.Content = page;
+
+				RenderOptions.SetBitmapScalingMode(page, BitmapScalingMode.HighQuality);
 
 				documentX.Pages.Add(pageX);
 			}
